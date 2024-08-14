@@ -54,7 +54,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     versionLabel->setFont(Font("CP Mono", "Plain", 15));
     versionLabel->setColour(Label::textColourId, Colours::white);
     addAndMakeVisible(versionLabel);
-    LOGC("RCB Wi-Fi version = ", PLUGIN_VERSION);
+    LOGC("[dspw] RCB Wi-Fi version = ", PLUGIN_VERSION);
 
 	// Num chans
 	chanLabel = new Label("NumCh", "Channels");
