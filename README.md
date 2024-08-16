@@ -4,7 +4,8 @@
 
 For use with DSPW RCB Wi-Fi devices (RCB-W24A-LVDS and RCB-W24B-LVDS).
 Setup, and control multiple RCB devices.
-Stream up to 32 channels 20ksps data from Intan RHD2123 and RHD2216 headstages.
+Stream up to 32 channels 20ksps data from Intan RHD2123 or RHD2216 headstages.
+Stream up to 16 channels 30ksps data from Intan RHD2132 or RHD2216 headstages.
 
 ## Installation
 
@@ -89,4 +90,4 @@ Running the `ALL_BUILD` scheme will compile the plugin; running the `INSTALL` sc
 
 ## Attribution
 
-This plugin was developed by Robert Paugh at DSPW, leveraging code from Rhythm Plugins, Ephys Socket by Josh Siegle, Aarón Cuevas López and Jon Newman.
+This plugin was developed by Robert Paugh at DSP Wireless, Inc., expanding on code from Rhythm Plugins, Ephys Socket, by Josh Siegle, Aarón Cuevas López and Jon Newman.
