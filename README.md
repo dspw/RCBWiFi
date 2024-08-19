@@ -87,7 +87,7 @@ Next, launch Xcode and open the `OE_PLUGIN_RCBWiFi.xcodeproj` file that now live
 Running the `ALL_BUILD` scheme will compile the plugin; running the `INSTALL` scheme will install the `.bundle` file to `/Users/<username>/Library/Application Support/open-ephys/plugins-api8`. The XDAQ plugin should be available the next time you launch the GUI from Xcode.
 
 
-
 ## Attribution
 
-This plugin was developed by Robert Paugh at DSP Wireless, Inc., expanding on code from Rhythm Plugins, Ephys Socket, by Josh Siegle, Aarón Cuevas López and Jon Newman.
+This plugin was developed by Robert Paugh at DSP Wireless, Inc., expanding on code found in Data Thread Template, Rhythm Plugins, and Ephys Socket, by Josh Siegle, Aarón Cuevas López and Jon Newman.
+
