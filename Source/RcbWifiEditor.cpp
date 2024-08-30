@@ -36,7 +36,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 	desiredWidth = 412;
   
 	String desiredFs[17] = { "30000", "25000", "20000", "15000", "12500", "10000", "8000", "6250", "5000", "4000", "3330", "3000", "2500", "2000", "1500", "1250", "1000" };
-
+    
 	String lowerBw[25] = { "500 Hz", "300 Hz", "250 Hz", "200 Hz", "150 Hz",
 		"100 Hz", "75 Hz", "50 Hz", "30 Hz", "25 Hz", "20 Hz", "15 Hz", "10 Hz",
 		"7.5 Hz", "5.0 Hz", "3.0 Hz", "2.5 Hz", "2.0 Hz", "1.5 Hz", "1.0 Hz",
@@ -771,6 +771,7 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
 
 	if (comboBoxThatHasChanged == chanCbox)
 	{
+      //  fsCbox->clear();
         // get number of channels from comboBox
         int num_channels = chanCbox->getText().getIntValue();
         Value chStartVal = chStartNumLabel->getTextValue();
@@ -788,10 +789,19 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
             "Please check your Channel Start Number setting. \r\n"
             "",
             "OK", 0);
+            
+            return;
         }
-        else
+        
+        // if channels = 32 then sample rte must be 20ksps or less
+        if(chanCbox->getText() == "32")
         {
-        //chStartIsValid = true;
+            if (fsCbox->getSelectedItemIndex() < 3)
+            {
+                fsCbox->setSelectedItemIndex(2);
+            }
+        }
+            //chStartIsValid = true;
         uiIsOk = true;
         
         // get number of channels from comboBox
@@ -805,10 +815,17 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
         node->sample_rate = node->updateSampleRate();
         CoreServices::updateSignalChain(this);
             
-        }
 	}
 	else if (comboBoxThatHasChanged == fsCbox)
 	{
+        // if channels = 32 then sample rte must be 20ksps or less
+        if(chanCbox->getText() == "32")
+        {
+            if (fsCbox->getSelectedItemIndex() < 3)
+            {
+                fsCbox->setSelectedItemIndex(2);
+            }
+        }
 		// get desired sample rate from combo box
 		node->desiredSampleRate = fsCbox->getText().getFloatValue();
 		node->sample_rate = node->updateSampleRate();

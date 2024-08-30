@@ -507,7 +507,7 @@ void RcbWifi::setRCBTokens()
 	//Init host ip and port 192.168.0.102:4416
     // sendRCBTriggerPost(ipNumStr, "__SL_P_UUU=192.168.0.102:4416");
 	rcbMsgStr = "__SL_P_UUU=" + myHostStr;
-	LOGC("[dspw] Host is  ",myHostStr);
+	LOGD("[dspw] Host is  ",myHostStr);
     LOGD("[dspw] Msg is  ",rcbMsgStr);
     sendRCBTriggerPost(ipNumStr, rcbMsgStr);
 
