@@ -796,9 +796,16 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
         // if channels = 32 then sample rte must be 20ksps or less
         if(chanCbox->getText() == "32")
         {
-            if (fsCbox->getSelectedItemIndex() < 3)
+            if (fsCbox->getSelectedItemIndex() < 2)
             {
                 fsCbox->setSelectedItemIndex(2);
+                AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                    "Sample Rate value " + fsCbox->getText() + " is not valid \r\n"
+                    "when Number of Channels is " + chanCbox->getText() +". \r\n"
+                    "If channels = 32 Sample Rate must be 20,000 or lower.\r\n",
+                    "Please check your Channel Numbers setting. \r\n"
+                    "",
+                    "OK", 0);
             }
         }
             //chStartIsValid = true;
@@ -821,9 +828,18 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
         // if channels = 32 then sample rte must be 20ksps or less
         if(chanCbox->getText() == "32")
         {
-            if (fsCbox->getSelectedItemIndex() < 3)
+            if (fsCbox->getSelectedItemIndex() < 2)
             {
                 fsCbox->setSelectedItemIndex(2);
+                AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                    "Sample Rate value " + fsCbox->getText() + " is not valid \r\n"
+                    "when Number of Channels is " + chanCbox->getText() +". \r\n"
+                    "If channels = 32 Sample Rate must be 20,000 or lower.",
+                    "Please check your Channel Number setting. \r\n"
+                    "",
+                    "OK", 0);
+                
+                //fsCbox->setSelectedItemIndex(2);
             }
         }
 		// get desired sample rate from combo box
