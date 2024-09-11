@@ -47,7 +47,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 		"300 Hz", "250 Hz", "200 Hz", "150 Hz", "100 Hz" };
 
     String pollRate[10] = {"OFF", "1", "2", "3", "4", "5", "10", "15", "20", "30" };
-    
+ 
     // version label
     versionLabel = new Label("Version", PLUGIN_VERSION);
     versionLabel->setBounds(360, 6, 60, 15);

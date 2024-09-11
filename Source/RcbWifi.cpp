@@ -856,9 +856,9 @@ String RcbWifi::getIntanStatusInfo()
                                                      "OK", 0);
                 }
                 intanAlertNum = intanAlertNum + 1;
-
+                
+                LOGD("[dspw] isGoodIntan = ",isGoodIntan);
 				return "Intan init failed.";
-				LOGD("[dspw] isGoodIntan = ",isGoodIntan);
 			}
 		}
 	}
