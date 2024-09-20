@@ -71,6 +71,8 @@ Sample Rate selection (fs)
 Sample rates between 1 and 30 kHz can be selected with this drop-down menu. This selection will determine the requested sample rate for the headstage connected to the RCB Module.
 Because only certain values are possible, the actual sample rate may be different from the number you selected; the actual sample rate is dependent on the number of channels selected and the requested sample rate. The plugin will automatically select the nearest value, and that will be indicated in the GUI. 
 
+If select 32 Channels then Sample Rate is restricted to 20ksps or less.  If select 28 channels or fewer Sample Rate can be 30ksps or less.
+
 Headstage Number of RHD Channels Selection
 ################################
 
@@ -81,8 +83,9 @@ Ex. For RHD2132 with 32 active channels, select 32 and 1.
 Using 16-channel headstages
 ----------------------------
 
-This is necessary because the difference between 16-channel and 32-channel headstages cannot detected in software, and has to be selected manually.
-For RHD2132 with active channels 8 thru 24 select 16 and 8.  
+This is necessary because the difference between 16-channel and 32-channel headstages cannot be detected in software and has to be selected manually.
+For 16 channel RHD2132 headstage with active channels 8 thru 24 select 16 and 8. 
+For 16 channel RHD2216 headstage with differential inputs select 16 and 1. 
 
 
 RCB PA Attn Selection
