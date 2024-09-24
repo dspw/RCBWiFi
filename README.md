@@ -2,10 +2,10 @@
 
 ![RCB Wi-Fi-plugin-screenshot](Resources/RCB-WiFi-plugin.png)
 
-For use with DSPW RCB Wi-Fi devices (RCB-W24A-LVDS and RCB-W24B-LVDS).
+For use with DSPW RCB Wi-Fi devices (RCB-W24A-LVDS, RCB-W24B-LVDS, RCB-W24C-LVDS).
 Setup, and control multiple RCB devices.
 Stream up to 32 channels 20ksps data from Intan RHD2123 or RHD2216 headstages.
-Stream up to 16 channels 30ksps data from Intan RHD2132 or RHD2216 headstages.
+Stream up to 28 channels 30ksps data from Intan RHD2132 or RHD2216 headstages.
 
 ## Installation
 
@@ -13,7 +13,7 @@ This plugin will soon be available via the Open Ephys GUI's built-in Plugin Inst
 
 ## Usage
 
-Instructions for using the DSPW Plugin will be available soon.
+Instructions for using the DSPW Plugin will be available soon at dspw.io website.  Contact Robert at DSPW if you need help.
 
 ## Building from source
 
