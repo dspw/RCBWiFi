@@ -259,7 +259,7 @@ bool RcbWifi::startAcquisition()
     LOGC("[dspw] Start Time = ",myTime);
     
 	LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
-	if (initPassed == true && (batteryInit > BATT_INIT_THRESH)) // and batt poll is > ?
+	if (initPassed == true && (batteryInit > BATT_STREAM_THRESH)) // and batt poll is > ?
 	{
 		sourceBuffers[0]->clear();  //macos
 		firstPacket = 1;
@@ -292,8 +292,8 @@ bool RcbWifi::startAcquisition()
 		initPassed = false;
 		
 		AlertWindow::showMessageBox(AlertWindow::NoIcon,
-			"RCB WiFi Module not Initialized. \n\n"
-			"Please check your IP and Host Address and Host Port settings. \n\nChanging any RHD configuration settings requires INIT. \r\n",
+			"RCB WiFi Module not ready to Stream Data. \n\n"
+			"Please check your IP and Host Address and Host Port settings. \n\nCheck that the RCB Battery Voltage shows OK.\n\nChanging any RHD configuration settings requires INIT. \r\n",
 			"Press Init Button to retry INIT.",
 			"OK", 0);
 
@@ -766,10 +766,9 @@ String RcbWifi::getIntanStatusInfo()
             // battery voltage calc might be different for different RCB versions.
             //batteryInit = 1.026 * voltStr.getFloatValue();  //correct for 210k,100k,100k
             batteryInit = 0.995 * voltStr.getFloatValue(); //correct for 200k,100k,100k
-            LOGD("[dspw] RCB Battery =  ", batteryInit, "V");
+            LOGD("[dspw] RCB Battery Init =  ", batteryInit, "V");
             
             //LOGD("[dspw] voltStr = ",voltStr, "V");
-            //LOGD("[dspw] batteryInit =  ",batteryInit);
             
             if (batteryInit > BATT_INIT_THRESH)
             {
@@ -782,6 +781,14 @@ String RcbWifi::getIntanStatusInfo()
             else
             {
                 batteryStatusInfo = ("Bat " + String(batteryInit, 2) + "V Fail");
+                isGoodRCB = false;
+                AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                    "RCB Battery voltage is too low.",
+                    "Please recharge or change battery. \r\n\r\n"
+                    "Press Init button to try again.",
+                    "OK", 0);
+                
+                return "RCB battery needs recharge.";
             }
 			
 			// format and display RHD registers 40-44,and 60-63.  See Intan RHD data
