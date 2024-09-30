@@ -261,9 +261,10 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 	addAndMakeVisible(portNumLabel);
 
 	// Init Button Label
-    initLabel = new Label("Init", "Configure"); 
+   // initLabel = new Label("Init", "Configure");
+    initLabel = new Label("Init", "Initialize");
 	initLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	initLabel->setBounds(52, 96, 65, 12);
+	initLabel->setBounds(52, 96, 68, 12);
 	initLabel->setColour(Label::textColourId, Colours::black);
 	addAndMakeVisible(initLabel);
 
@@ -358,13 +359,11 @@ void RcbWifiEditor::timerCallback(int timerID)
 
 		if (timeInt == 0)
 		{
-			// either of these approaches witll work, not sure if advantage to either
-			//this
 			node->getBatteryInfo();
 			batteryLabel->setText(node->batteryInfo, dontSendNotification);
-
-			// or this
-			//batteryLabel->setText(node->getBatteryInfo(), dontSendNotification);
+            
+            if (node->isGoodRCB == false)
+                initButton->setLabel("Init");
 
 			// to slow battery display update and keep Packet update more speedy. Or have two timers? Or use MultiTimer?
 			timeInt = 5;
@@ -398,7 +397,7 @@ void RcbWifiEditor::timerCallback(int timerID)
                 AlertWindow::showMessageBox(AlertWindow::NoIcon,
                     "RCB-LVDS Module not found at IP address " + node->ipNumStr,
                     "Please check RCB IP Address setting,\nWiFi router configuration,\nand RCB battery power.\r\n\r\n"
-                    "Press Init button to try again.",
+                    "Press Initialize button to try again.",
                     "OK", 0);
             }
             rcbIsLost++;
@@ -492,10 +491,10 @@ void RcbWifiEditor::buttonClicked(Button* button)
                 //first check that RCB exists on network, get battery voltage
                 String htmlStatus = node->getIntanStatusInfo();
                 LOGD("[dspw] htmlStatus -  ", htmlStatus);
-                
+                batteryLabel->setText(node->batteryStatusInfo, dontSendNotification);
                 if (node->isGoodRCB == true)
                 {
-                    batteryLabel->setText(node->batteryStatusInfo, dontSendNotification);
+                    //batteryLabel->setText(node->batteryStatusInfo, dontSendNotification);
                     
                     // send stop stream command in case it is alreadry started ?
                     
@@ -595,7 +594,7 @@ void RcbWifiEditor::buttonClicked(Button* button)
                     AlertWindow::showMessageBox(AlertWindow::NoIcon,
                                                 "RCB-LVDS Module not found at IP address " + node->ipNumStr,
                                                 "Please check RCB IP Address setting,\nWiFi router configuration,\nand RCB battery power.\r\n\r\n"
-                                                "Press Init button to try again.",
+                                                "Press Initialize button to try again.",
                                                 "OK", 0);
                     return;
                 }
@@ -607,7 +606,7 @@ void RcbWifiEditor::buttonClicked(Button* button)
                 AlertWindow::showMessageBox(AlertWindow::NoIcon,
                                             "RCB and Host IP network mismatch.",
                                             "Check your Wifi network connection. \r\n\r\n"
-                                            "Press Init button to try again.",
+                                            "Press Initialize button to try again.",
                                             "OK", 0);
             }
         }
@@ -618,7 +617,7 @@ void RcbWifiEditor::buttonClicked(Button* button)
             AlertWindow::showMessageBox(AlertWindow::NoIcon,
                                         "Number of channels + channel Start canot be greater than 33.",
                                         "Check your RCB Plugin UI Channel settings. \r\n\r\n"
-                                        "Press Init button to try again.",
+                                        "Press Initialize button to try again.",
                                         "OK", 0);
         }
     }

@@ -32,6 +32,7 @@
 #include <string>
 #include <iostream>
 
+// These consts will eventually be options located in a visulizer window.
 // from ephysSocket
 const int DEFAULT_PORT = 51234; //4416;
 const float DEFAULT_SAMPLE_RATE = 20639.834; //for 16 at 20k 20768.433f;
@@ -40,16 +41,16 @@ const uint16_t DEFAULT_DATA_OFFSET = 32768;
 const int DEFAULT_NUM_SAMPLES = 21; // this is num samples in udp rxbuffer.  
 const int DEFAULT_NUM_CHANNELS = 32;
 
-// Battery thresholds needed to start data streams and keep them going
-const float BATT_INIT_THRESH = 3.5;
-const float BATT_STREAM_THRESH = 3.4;
+// Battery thresholds needed to initialize RCB and start data streams
+const float BATT_INIT_THRESH = 3.7;
+const float BATT_STREAM_THRESH = 3.7;
 
 // Factory Test mode.  Allows RCB streaming without Intan RHD.
 // Or is this the prefered behavior. Always allow streaming regardless of Intan connected.
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.2";
+const String PLUGIN_VERSION = "v0.1.3";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2

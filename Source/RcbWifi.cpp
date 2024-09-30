@@ -138,7 +138,6 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
 	OwnedArray<DeviceInfo>* devices,
 	OwnedArray<ConfigurationObject>* configurationObjects)
 {
-    //LOGC("[dspw] In updateSettings()");
     //LOGD("[dspw] In updateSettings()");
    
 	continuousChannels->clear();
@@ -259,7 +258,7 @@ bool RcbWifi::startAcquisition()
     LOGC("[dspw] Start Time = ",myTime);
     
 	LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
-	if (initPassed == true && (batteryInit > BATT_STREAM_THRESH)) // and batt poll is > ?
+	if (initPassed == true && (batteryInit > BATT_INIT_THRESH - 0.25)) // and batt poll is > ?
 	{
 		sourceBuffers[0]->clear();  //macos
 		firstPacket = 1;
@@ -292,9 +291,9 @@ bool RcbWifi::startAcquisition()
 		initPassed = false;
 		
 		AlertWindow::showMessageBox(AlertWindow::NoIcon,
-			"RCB WiFi Module not ready to Stream Data. \n\n"
+			"RCB WiFi Module " + ipNumStr + " not ready to Stream Data. \n\n"
 			"Please check your IP and Host Address and Host Port settings. \n\nCheck that the RCB Battery Voltage shows OK.\n\nChanging any RHD configuration settings requires INIT. \r\n",
-			"Press Init Button to retry INIT.",
+			"Press Initialize Button to retry INIT.",
 			"OK", 0);
 
 		CoreServices::setAcquisitionStatus(false);
@@ -492,7 +491,7 @@ void RcbWifi::sendRCBTriggerPost(String ipNumStr, String msgStr)
 		AlertWindow::showMessageBox(AlertWindow::NoIcon,
 			"RCB-LVDS Module not found at IP address " + ipNumStr,
 			"Please check your IP address setting. \r\n\r\n"
-			"Press Init button to try again.",
+			"Press Initialize button to try again.",
 			"OK", 0);
 	}
 }
@@ -766,15 +765,14 @@ String RcbWifi::getIntanStatusInfo()
             // battery voltage calc might be different for different RCB versions.
             //batteryInit = 1.026 * voltStr.getFloatValue();  //correct for 210k,100k,100k
             batteryInit = 0.995 * voltStr.getFloatValue(); //correct for 200k,100k,100k
-            LOGD("[dspw] RCB Battery Init =  ", batteryInit, "V");
-            
+            LOGD("[dspw] RCB Init Battery Voltage =  ", batteryInit, "V");
             //LOGD("[dspw] voltStr = ",voltStr, "V");
             
             if (batteryInit > BATT_INIT_THRESH)
             {
                 batteryStatusInfo = ("Bat " + String(batteryInit, 2) + "V OK");
             }
-            else if (batteryInit > (BATT_INIT_THRESH - 0.1))
+            else if (batteryInit > (BATT_INIT_THRESH - 0.25))
             {
                 batteryStatusInfo = ("Bat " + String(batteryInit, 2) + "V Low");
             }
@@ -782,10 +780,11 @@ String RcbWifi::getIntanStatusInfo()
             {
                 batteryStatusInfo = ("Bat " + String(batteryInit, 2) + "V Fail");
                 isGoodRCB = false;
+                LOGC("[dspw] RCB Init Fail Battery Voltage =  ", batteryInit, "V");
                 AlertWindow::showMessageBox(AlertWindow::NoIcon,
-                    "RCB Battery voltage is too low.",
+                    "RCB " + ipNumStr + " Battery voltage is too low.",
                     "Please recharge or change battery. \r\n\r\n"
-                    "Press Init button to try again.",
+                    "Press Initialize button to try again.",
                     "OK", 0);
                 
                 return "RCB battery needs recharge.";
@@ -826,7 +825,7 @@ String RcbWifi::getIntanStatusInfo()
 						AlertWindow::showMessageBox(AlertWindow::NoIcon,
 							"Number of channels mismatch.",
 							"Please check that Channel setting is not greater than Headstage Max channels. \r\n\r\n"
-							"Press Init button to try again.",
+							"Press Initialize button to try again.",
 							"OK", 0);
 					}
 				}
@@ -859,7 +858,7 @@ String RcbWifi::getIntanStatusInfo()
                     AlertWindow::showMessageBoxAsync(AlertWindow::NoIcon,
                                                      "Intan Headstage not found.",
                                                      "Please check SPI cable connections. \r\n\r\n"
-                                                     "Press Init button to try again.",
+                                                     "Press Initialize button to try again.",
                                                      "OK", 0);
                 }
                 intanAlertNum = intanAlertNum + 1;
@@ -875,7 +874,7 @@ String RcbWifi::getIntanStatusInfo()
 		/*AlertWindow::showMessageBox(AlertWindow::NoIcon,
 			"RCB-LVDS Module not found at IP address " + ipNumStr,
 			"Please check RCB IP Address setting,\nWiFi router configuration,\nand RCB battery power.\r\n\r\n"
-			"Press Init button to try again.",
+			"Press Initialize button to try again.",
 			"OK", 0);
 			*/
 		return "RCB init failed.";
@@ -908,14 +907,27 @@ String RcbWifi::getBatteryInfo()
     {
         batteryInfo = ("Bat " + String(battV, 2) + "V OK");
     }
-    else if (battV > (BATT_STREAM_THRESH - 0.1))
+    else if (battV > (BATT_STREAM_THRESH - 0.28))
     {
         batteryInfo = ("Bat " + String(battV, 2) + "V Low");
     }
     else
     {
         batteryInfo = ("Bat " + String(battV, 2) + "V Fail");
+        
         // should we stop acquisition if battery is this low ?
+        initPassed = false;  // important to be placed before stopAcquisition
+        isGoodRCB = false;
+        stopAcquisition();
+        CoreServices::setAcquisitionStatus(false);
+      
+        sendRCBTriggerPost(ipNumStr, "__SL_P_ULD=OFF");
+        
+        AlertWindow::showMessageBox(AlertWindow::NoIcon,
+            "RCB-LVDS "  + ipNumStr + " Battery requires recharge.",
+            "RCB module cannot operate until battery is recharged or replaced.\r\n\r\n"
+            "After recharge, Press Initialize button to try again.",
+            "OK", 0);
     }
 	//Reset Battery Voltage
 	batteryVolts = 0;
