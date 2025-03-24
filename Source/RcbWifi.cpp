@@ -254,13 +254,13 @@ void  RcbWifi::tryToConnect()
 bool RcbWifi::startAcquisition()
 {
 	// consider resending init messages ?  could call setRCBTokens() ?
-    String myTime = Time::getCurrentTime().toString(false,true);
-    LOGC("[dspw] Start Time = ",myTime);
+    //String myTime = Time::getCurrentTime().toString(false,true);
+    //LOGC("[dspw] Start Time = ",myTime);
     
-	LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
+	//LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
 	if (initPassed == true && (batteryInit > BATT_INIT_THRESH - 0.25)) // and batt poll is > ?
 	{
-		sourceBuffers[0]->clear();  //macos
+		//sourceBuffers[0]->clear();  //macos
 		firstPacket = 1;
 		hit = 0;
 		miss = 0;
@@ -281,9 +281,13 @@ bool RcbWifi::startAcquisition()
 		if (connected == true)
 		{
 			// send HTTP Post message to RCB - RUN
-			LOGC("[dspw] Start Wifi UDP Stream.  ",ipNumStr);
+			//LOGC("[dspw] Start Wifi UDP Stream.  ",ipNumStr);
 			sendRCBTriggerPost(ipNumStr, "__SL_P_ULD=ON");
-
+            
+            LOGC("[dspw] Start Wi-fi UDP Stream.  ",ipNumStr);
+            String myTime = Time::getCurrentTime().toString(false,true);
+            LOGC("[dspw] Start Time = ",myTime);
+            LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
 			return true;
 		}
 	}
@@ -475,7 +479,7 @@ void RcbWifi::sendRCBTriggerPost(String ipNumStr, String msgStr)
     //LOGD("POST msgStr - ", msgStr);
     LOGD("[dspw] POST str URL - ", urlPost.toString(true));
     LOGD("[dspw] POST str data - ", urlPost.getPostData());
-	std::unique_ptr<InputStream> postStream(urlPost.createInputStream(true, nullptr, nullptr, String(), 2000, &responseHeaders, &statusCode, 5, "POST"));
+	std::unique_ptr<InputStream> postStream(urlPost.createInputStream(true, nullptr, nullptr, String(), 10000, &responseHeaders, &statusCode, 5, "POST"));
     
 	if (postStream != nullptr)
     {
@@ -524,7 +528,8 @@ void RcbWifi::setRCBTokens()
     String rhdChMaskShftStr = String::toHexString(chShftMask[num_channels - 1] << (chShift - 1)) + " 6" ; //the "6" is needed in all masks for correct aux sequence
    
     //LOGD("[dspw] ChMaskShft -  ",chShift);
-    LOGC("[dspw] rhdChMaskShftStr -  ",rhdChMaskShftStr.toUpperCase());
+   // LOGC("[dspw] rhdChMaskShftStr -  ",rhdChMaskShftStr.toUpperCase());
+    LOGD("[dspw] rhdChMaskShftStr -  ",rhdChMaskShftStr.toUpperCase());
 
     rcbMsgStr = "__SL_P_U00=" + rhdChMaskShftStr.toUpperCase();
     LOGD("[dspw] rcbMsgStr with Shift  -  ",rcbMsgStr);

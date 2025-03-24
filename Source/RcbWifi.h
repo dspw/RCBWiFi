@@ -50,7 +50,7 @@ const float BATT_STREAM_THRESH = 3.7;
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.3";
+const String PLUGIN_VERSION = "v0.1.4";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2
