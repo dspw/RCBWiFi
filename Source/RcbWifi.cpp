@@ -148,10 +148,10 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
 	configurationObjects->clear();
 	
 	//channelNames.clear();  ??
-
+    //LOGC("[dspw] Stream ipNumStr = ", (ipNumStr.getLastCharacters(2)));
 	DataStream::Settings dataStreamSettings
 	{
-		"RCBWifiStream",
+		"RCBWifiStream" + (ipNumStr.getLastCharacters(2)),
 		"Data acquired via RCB UDP network stream",  // "description"
 		"rcbwifi.data",  // "identifier"
 

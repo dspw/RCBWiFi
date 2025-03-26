@@ -47,7 +47,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 		"300 Hz", "250 Hz", "200 Hz", "150 Hz", "100 Hz" };
 
     String pollRate[10] = {"OFF", "1", "2", "3", "4", "5", "10", "15", "20", "30" };
- 
+     
     // version label
     versionLabel = new Label("Version", PLUGIN_VERSION);
     versionLabel->setBounds(360, 6, 60, 15);
@@ -297,6 +297,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 	myHost = getCurrentIpAddress();
     LOGD("[dspw] Host IP = ",myHost.toString());
 	hostIpNumLabel->setText(myHost.toString(), dontSendNotification);
+    node->ipNumStr = rcbIpNumLabel->getText();
 
 	//AlertWindow::showMessageBox(AlertWindow::NoIcon,
 	//	"OE GUI Host IP address is " + hostIpNumLabel->getText() + "",
@@ -922,5 +923,7 @@ void RcbWifiEditor::loadCustomParametersFromXml(XmlElement* xmlNode)
     // this is needed due to possible old hostAddr saved in Paremeters
     myHost = getCurrentIpAddress();
     hostIpNumLabel->setText(myHost.toString(), dontSendNotification);
+    
+    node->ipNumStr = rcbIpNumLabel->getText();
 
 }
