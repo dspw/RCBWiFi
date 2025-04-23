@@ -33,7 +33,8 @@ using namespace RcbWifiNode;
 RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : GenericEditor(parentNode)
 {
 	node = socket;
-	desiredWidth = 412;
+//	desiredWidth = 412;
+    desiredWidth = 480;
   
 	String desiredFs[17] = { "30000", "25000", "20000", "15000", "12500", "10000", "8000", "6250", "5000", "4000", "3330", "3000", "2500", "2000", "1500", "1250", "1000" };
     
@@ -50,11 +51,155 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
      
     // version label
     versionLabel = new Label("Version", PLUGIN_VERSION);
-    versionLabel->setBounds(360, 6, 60, 15);
+    versionLabel->setBounds(428, 6, 60, 15);
     versionLabel->setFont(Font("CP Mono", "Plain", 15));
     versionLabel->setColour(Label::textColourId, Colours::white);
     addAndMakeVisible(versionLabel);
     LOGC("[dspw] RCB Wi-Fi version = ", PLUGIN_VERSION);
+
+    // RCB IP address label
+    destIpLabel = new Label("RCBIP", "RCB IP Addr:");
+    destIpLabel->setBounds(8, 28, 130, 12);
+    destIpLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    addAndMakeVisible(destIpLabel);
+
+    rcbIpNumLabel = new Label("ipNumLabel", "192.168.0.93"); //default RCB-LVDS IP number is 192.168.0.93
+    rcbIpNumLabel->setTooltip("Default RCB-LVDS IP number is 192.168.0.93");
+    rcbIpNumLabel->setBounds(10, 41, 100, 15);
+    rcbIpNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    rcbIpNumLabel->setColour(Label::textColourId, Colours::black);
+    rcbIpNumLabel->setColour(Label::backgroundColourId, Colours::white);
+    rcbIpNumLabel->setEditable(true);
+    rcbIpNumLabel->addListener(this);
+    addAndMakeVisible(rcbIpNumLabel);
+
+    // Host IP address
+    hostIpLabel = new Label("DestIP", "Host IP Addr:");
+    hostIpLabel->setBounds(8, 61, 130, 12);
+    hostIpLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    addAndMakeVisible(hostIpLabel);
+
+    hostIpNumLabel = new Label("HostIP", "Press Init!");
+    hostIpNumLabel->setTooltip("Enter IP address of computer that is running the GUI.");
+    hostIpNumLabel->setBounds(10, 74, 100, 15);
+    hostIpNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    hostIpNumLabel->setColour(Label::textColourId, Colours::black);
+    hostIpNumLabel->setColour(Label::backgroundColourId, Colours::white);
+    hostIpNumLabel->setEditable(true);
+    hostIpNumLabel->addListener(this);
+    addAndMakeVisible(hostIpNumLabel);
+    //hostIpIsValid = false;
+
+    // Host Port
+    portLabel = new Label("Port", "Port");
+    portLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    portLabel->setBounds(8, 96, 65, 12);
+    portLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(portLabel);
+
+    // Host Port number
+    portNumLabel = new Label("PortNum", String(DEFAULT_PORT));
+    portNumLabel->setTooltip("Enter UDP port number between 49152 to 65535.");
+    portNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    //   portNumLabel->setText(std::to_string(node->port), dontSendNotification);
+    portNumLabel->setBounds(10, 109, 40, 15); //42
+    portNumLabel->setColour(Label::textColourId, Colours::black);
+    portNumLabel->setColour(Label::backgroundColourId, Colours::white);
+    portNumLabel->setEditable(true);
+    portNumLabel->addListener(this);
+    addAndMakeVisible(portNumLabel);
+
+    // Init Button Label
+   // initLabel = new Label("Init", "Configure");
+    initLabel = new Label("Init", "Initialize");
+    initLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    initLabel->setBounds(52, 96, 68, 12);
+    initLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(initLabel);
+
+    // Init button
+    initButton = new UtilityButton("Init Me!", Font("Small Text", 13, Font::bold));
+    initButton->setTooltip("Press to Initialize RCB device with UI values.");
+
+    initButton->setBounds(57, 108, 55, 18);
+    initButton->addListener(this);
+    addAndMakeVisible(initButton.get());
+  
+    // RHD DSP Cutoff
+    dspCutLabel = new Label("dspCutLabel", "DSP  HPF");
+    dspCutLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    dspCutLabel->setBounds(120, 28, 85, 12);
+    dspCutLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(dspCutLabel);
+
+    dspCutNumLabel = new Label("dspCutNumLabel", "1");
+    dspCutNumLabel->setBounds(153, 40, 28, 17);
+    dspCutNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    dspCutNumLabel->setColour(Label::textColourId, Colours::black);
+    dspCutNumLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
+    dspCutNumLabel->setEditable(true);
+    dspCutNumLabel->addListener(this);
+    addAndMakeVisible(dspCutNumLabel);
+
+    // add DSP Offset Button
+    dspOffsetButton = new UtilityButton("DSP:", Font("Small Text", 13, Font::plain));
+    dspOffsetButton->setRadius(3.0f);
+    dspOffsetButton->setBounds(122, 40, 29, 17);
+    dspOffsetButton->addListener(this);
+    dspOffsetButton->setClickingTogglesState(true);
+    dspOffsetButton->setTooltip("Toggle DSP offset removal");
+    addAndMakeVisible(dspOffsetButton);
+    dspOffsetButton->setToggleState(true, dontSendNotification);
+
+    // RHD Upper BW
+    upBwLabel = new Label("upBW", "Upper");
+    upBwLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    upBwLabel->setBounds(120, 62, 85, 10);
+    upBwLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(upBwLabel);
+
+    upBwCbox = new ComboBox();
+    upBwCbox->setBounds(122, 74, 59, 17);
+    upBwCbox->setTooltip("Choose RHD2000 Filter Upper Freq.");
+
+    upBwCbox->addListener(this);
+    for (int i = 0; i < 17; i++)
+        upBwCbox->addItem(upperBw[i], i + 1); // start numbering at one for
+    upBwCbox->setSelectedId(4, dontSendNotification);
+    addAndMakeVisible(upBwCbox);
+
+    // RHD Lower BW
+    lowBwLabel = new Label("lowBW", "Lower");
+    lowBwLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    lowBwLabel->setBounds(120, 97, 85, 12);
+    lowBwLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(lowBwLabel);
+
+    lowBwCbox = new ComboBox();
+    lowBwCbox->setBounds(122, 109, 59, 17);
+    lowBwCbox->setTooltip("Choose RHD2000 Filter Lower Freq.");
+    lowBwCbox->addListener(this);
+    for (int i = 0; i < 25; i++)
+        lowBwCbox->addItem(lowerBw[i], i + 1); // start numbering at one for
+    lowBwCbox->setSelectedId(20, dontSendNotification);
+    addAndMakeVisible(lowBwCbox);
+
+    //  Desired Sample Rate  Fs
+    fsLabel = new Label("Fs(Hz)", "Fs (Hz)");
+    fsLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    fsLabel->setBounds(188, 28, 65, 12);
+    fsLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(fsLabel);
+
+    fsCbox = new ComboBox();
+    fsCbox->setBounds(190, 40, 58, 17);
+    fsCbox->setTooltip("Choose desired nominal Fs.");
+
+    fsCbox->addListener(this);
+    for (int i = 0; i < 17; i++)
+        fsCbox->addItem(desiredFs[i], i + 1);
+    fsCbox->setSelectedId(3, dontSendNotification);
+    addAndMakeVisible(fsCbox);
 
 	// Num chans
 	chanLabel = new Label("NumCh", "Channels");
@@ -84,85 +229,78 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     chStartNumLabel->addListener(this);
     addAndMakeVisible(chStartNumLabel);
 
-	//  Desired Sample Rate  Fs
-	fsLabel = new Label("Fs(Hz)", "Fs (Hz)");
-	fsLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-    fsLabel->setBounds(188, 28, 65, 12);
-	fsLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(fsLabel);
+    // RCB PA Power
+    paPwrLabel = new Label("PAPWR", "PA Attn");
+    paPwrLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    paPwrLabel->setBounds(188, 96, 65, 12);
+    paPwrLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(paPwrLabel);
 
-	fsCbox = new ComboBox();
-    fsCbox->setBounds(190, 40, 58, 17);
-    fsCbox->setTooltip("Choose desired nominal Fs.");
+    paPwrCbox = new ComboBox();
+    paPwrCbox->setBounds(190, 108, 58, 17);
+    paPwrCbox->addListener(this);
+    for (int i = 0; i < 16; i++)
+        paPwrCbox->addItem(String(i), i + 1); // start numbering at one for
+    paPwrCbox->setSelectedId(5, dontSendNotification);
+    paPwrCbox->setTooltip("RCB WiFi PA Attenuation. Best when set at 4.");
+    addAndMakeVisible(paPwrCbox);
+    
+    // Aux Enable
+    auxEnableLabel = new Label("sampleEventLabel", "AUX CH");
+    auxEnableLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    auxEnableLabel->setBounds(258, 28, 85, 12);
+    auxEnableLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(auxEnableLabel);
+    
+    // AUX Enable
+    auxEnableButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
+    auxEnableButton->setRadius(3.0f);
+    auxEnableButton->setBounds(260, 40, 50, 18);
+    auxEnableButton->addListener(this);
+    auxEnableButton->setClickingTogglesState(true);
+    auxEnableButton->setTooltip("Enable RHD AUX Inputs");
+    addAndMakeVisible(auxEnableButton);
+    auxEnableButton->setToggleState(false, dontSendNotification);
+    
+    // Sample Event Enable
+    sampleEventButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
+    sampleEventButton->setRadius(3.0f);
+    sampleEventButton->setBounds(260, 74, 50, 18);
+    sampleEventButton->addListener(this);
+    sampleEventButton->setClickingTogglesState(true);
+    sampleEventButton->setTooltip("Enable Sample Event #8 ");
+    addAndMakeVisible(sampleEventButton);
+    sampleEventButton->setToggleState(false, dontSendNotification);
+    
+    // Sample Event Settings
+    sampleEventLabel = new Label("sampleEventLabel", "Event 8");
+    sampleEventLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    sampleEventLabel->setBounds(257, 62, 85, 12);
+    sampleEventLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(sampleEventLabel);
 
-	fsCbox->addListener(this);
-	for (int i = 0; i < 17; i++)
-		fsCbox->addItem(desiredFs[i], i + 1);
-	fsCbox->setSelectedId(3, dontSendNotification);
-	addAndMakeVisible(fsCbox);
-
-	// RHD Upper BW
-	upBwLabel = new Label("upBW", "Upper");
-	upBwLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	upBwLabel->setBounds(120, 62, 85, 10);
-	upBwLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(upBwLabel);
-
-	upBwCbox = new ComboBox();
-	upBwCbox->setBounds(122, 74, 59, 17);
-    upBwCbox->setTooltip("Choose RHD2000 Filter Upper Freq.");
-
-	upBwCbox->addListener(this);
-	for (int i = 0; i < 17; i++)
-		upBwCbox->addItem(upperBw[i], i + 1); // start numbering at one for
-	upBwCbox->setSelectedId(4, dontSendNotification);
-	addAndMakeVisible(upBwCbox);
-
-	// RHD Lower BW
-	lowBwLabel = new Label("lowBW", "Lower");
-	lowBwLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	lowBwLabel->setBounds(120, 97, 85, 12);
-	lowBwLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(lowBwLabel);
-
-	lowBwCbox = new ComboBox();
-	lowBwCbox->setBounds(122, 109, 59, 17);
-    lowBwCbox->setTooltip("Choose RHD2000 Filter Lower Freq.");
-	lowBwCbox->addListener(this);
-	for (int i = 0; i < 25; i++)
-		lowBwCbox->addItem(lowerBw[i], i + 1); // start numbering at one for
-	lowBwCbox->setSelectedId(20, dontSendNotification);
-	addAndMakeVisible(lowBwCbox);
-
-	// RHD DSP Cutoff
-	dspCutLabel = new Label("dspCutLabel", "DSP  HPF");
-	dspCutLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	dspCutLabel->setBounds(120, 28, 85, 12);
-	dspCutLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(dspCutLabel);
-
-	dspCutNumLabel = new Label("dspCutNumLabel", "1");
-	dspCutNumLabel->setBounds(153, 40, 28, 17);
-	dspCutNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	dspCutNumLabel->setColour(Label::textColourId, Colours::black);
-    dspCutNumLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
-	dspCutNumLabel->setEditable(true);
-	dspCutNumLabel->addListener(this);
-	addAndMakeVisible(dspCutNumLabel);
-
-	// add DSP Offset Button
-	dspOffsetButton = new UtilityButton("DSP:", Font("Small Text", 13, Font::plain));
-	dspOffsetButton->setRadius(3.0f);
-	dspOffsetButton->setBounds(122, 40, 29, 17);
-	dspOffsetButton->addListener(this);
-	dspOffsetButton->setClickingTogglesState(true);
-	dspOffsetButton->setTooltip("Toggle DSP offset removal");
-	addAndMakeVisible(dspOffsetButton);
-	dspOffsetButton->setToggleState(true, dontSendNotification);
-
+    numSamplesEventLabel = new Label("numSamplesLabel", "Samples");
+    numSamplesEventLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    numSamplesEventLabel->setBounds(257, 95, 85, 12);
+    numSamplesEventLabel->setColour(Label::textColourId, Colours::black);
+    addAndMakeVisible(numSamplesEventLabel);
+    
+    samplesNumLabel = new Label("samplesNumLabel", "1000");
+    samplesNumLabel->setBounds(260, 108, 50, 17);
+    samplesNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    samplesNumLabel->setColour(Label::textColourId, Colours::black);
+    samplesNumLabel->setColour(Label::backgroundColourId, Colours::white);
+    samplesNumLabel->setTooltip("Enter Number of Samples in each Sample Event ");
+    samplesNumLabel->setEditable(true);
+    samplesNumLabel->addListener(this);
+    addAndMakeVisible(samplesNumLabel);
+    
+// ****************
+    
     // Battery Poll timer rate
     pollRateCbox = new ComboBox();
-    pollRateCbox->setBounds(359, 109, 44, 17);
+    pollRateCbox->setBounds(418, 109, 44, 17);
+
     pollRateCbox->addListener(this);
     for (int i = 0; i < 10; i++)
         pollRateCbox->addItem(pollRate[i], i + 1 ); // start numbering at one for
@@ -170,127 +308,35 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     pollRateCbox->setSelectedId(1, sendNotification);
     addAndMakeVisible(pollRateCbox);
     
-    pollRateLabel = new Label("pollRateLabel", "Bat Poll\nRate(m)");
-    pollRateLabel->setBounds(354, 82, 65, 26);
+    pollRateLabel = new Label("pollRateLabel", "Bat Poll\nRate (m)");
+    pollRateLabel->setBounds(410, 82, 65, 26);
+
     pollRateLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     pollRateLabel->setColour(Label::textColourId, Colours::black);
     pollRateLabel->addListener(this);
     addAndMakeVisible(pollRateLabel);
-    
-    auxEnableButton = new UtilityButton("AUX", Font("Small Text", 13, Font::plain));
-    auxEnableButton->setRadius(3.0f);
-    auxEnableButton->setBounds(320, 81, 29, 24);
-    auxEnableButton->addListener(this);
-    auxEnableButton->setClickingTogglesState(true);
-    auxEnableButton->setTooltip("Enable RHD AUX Inputs");
-    addAndMakeVisible(auxEnableButton);
-    auxEnableButton->setToggleState(false, dontSendNotification);
 
 	// UDP Packet Hit Miss
-    seqNumLabel = new Label("seqNum", "Rx Packet PDR:PDR%\nSQ N: 0\nGood: 0\nMiss: 0");
+    seqNumLabel = new Label("seqNum", "UDP Rx Packet PDR:PDR%\nSQ N: 0\nGood: 0\nMiss: 0");
 	seqNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-    seqNumLabel->setBounds(254, 27, 150, 52);
+    seqNumLabel->setBounds(318, 27, 150, 52);
+    seqNumLabel->setBounds(318, 27, 160, 52);
 	seqNumLabel->setColour(Label::textColourId, Colours::black);
 	addAndMakeVisible(seqNumLabel);
 
 	// battery Label
     batteryLabel = new Label("batteryVolts", "Bat 0.00V ---");
 	batteryLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-    batteryLabel->setBounds(254, 112, 100, 13);
+    batteryLabel->setBounds(318, 112, 100, 13);
 	batteryLabel->setColour(Label::textColourId, Colours::black);
 	addAndMakeVisible(batteryLabel);
 
 	// RHD read only regs label
     rhdRegsLabel = new Label("rhdRegs", "Intan\nStatus ");
 	rhdRegsLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-    rhdRegsLabel->setBounds(254, 82, 70, 26);
+    rhdRegsLabel->setBounds(318, 82, 70, 26);
 	rhdRegsLabel->setColour(Label::textColourId, Colours::black);
 	addAndMakeVisible(rhdRegsLabel);
-
-	// RCB IP address label
-	destIpLabel = new Label("RCBIP", "RCB IP Addr:");
-	destIpLabel->setBounds(8, 28, 130, 12);
-	destIpLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	addAndMakeVisible(destIpLabel);
-
-	rcbIpNumLabel = new Label("ipNumLabel", "192.168.0.93"); //default RCB-LVDS IP number is 192.168.0.93
-	rcbIpNumLabel->setTooltip("Default RCB-LVDS IP number is 192.168.0.93");
-	rcbIpNumLabel->setBounds(10, 41, 100, 15);
-	rcbIpNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	rcbIpNumLabel->setColour(Label::textColourId, Colours::black);
-	rcbIpNumLabel->setColour(Label::backgroundColourId, Colours::white);
-	rcbIpNumLabel->setEditable(true);
-	rcbIpNumLabel->addListener(this);
-	addAndMakeVisible(rcbIpNumLabel);
-
-	// Host IP address
-	hostIpLabel = new Label("DestIP", "Host IP Addr:");
-	hostIpLabel->setBounds(8, 61, 130, 12);
-	hostIpLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	addAndMakeVisible(hostIpLabel);
-
-	hostIpNumLabel = new Label("HostIP", "Press Init!");
-    hostIpNumLabel->setTooltip("Enter IP address of computer that is running the GUI.");
-	hostIpNumLabel->setBounds(10, 74, 100, 15);
-	hostIpNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	hostIpNumLabel->setColour(Label::textColourId, Colours::black);
-	hostIpNumLabel->setColour(Label::backgroundColourId, Colours::white);
-	hostIpNumLabel->setEditable(true);
-	hostIpNumLabel->addListener(this);
-	addAndMakeVisible(hostIpNumLabel);
-	//hostIpIsValid = false;  
-
-	// Host Port
-	portLabel = new Label("Port", "Port");
-	portLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	portLabel->setBounds(8, 96, 65, 12);
-	portLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(portLabel);
-
-	// Host Port number
-	portNumLabel = new Label("PortNum", String(DEFAULT_PORT));
-    portNumLabel->setTooltip("Enter UDP port number between 49152 to 65535.");
-
-	portNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	//   portNumLabel->setText(std::to_string(node->port), dontSendNotification);
-	portNumLabel->setBounds(10, 109, 40, 15); //42
-	portNumLabel->setColour(Label::textColourId, Colours::black);
-	portNumLabel->setColour(Label::backgroundColourId, Colours::white);
-	portNumLabel->setEditable(true);
-	portNumLabel->addListener(this);
-	addAndMakeVisible(portNumLabel);
-
-	// Init Button Label
-   // initLabel = new Label("Init", "Configure");
-    initLabel = new Label("Init", "Initialize");
-	initLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	initLabel->setBounds(52, 96, 68, 12);
-	initLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(initLabel);
-
-	// Init button
-    initButton = new UtilityButton("Init Me!", Font("Small Text", 13, Font::bold));
-    initButton->setTooltip("Press to Initialize RCB device with UI values.");
-
-	initButton->setBounds(57, 108, 55, 18);
-	initButton->addListener(this);
-	addAndMakeVisible(initButton.get());
-	
-	// RCB PA Power
-	paPwrLabel = new Label("PAPWR", "PA Attn");
-	paPwrLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-	paPwrLabel->setBounds(188, 96, 65, 12);
-	paPwrLabel->setColour(Label::textColourId, Colours::black);
-	addAndMakeVisible(paPwrLabel);
-
-	paPwrCbox = new ComboBox();
-	paPwrCbox->setBounds(190, 108, 58, 17);
-	paPwrCbox->addListener(this);
-	for (int i = 0; i < 16; i++)
-		paPwrCbox->addItem(String(i), i + 1); // start numbering at one for
-	paPwrCbox->setSelectedId(5, dontSendNotification);
-	paPwrCbox->setTooltip("RCB WiFi PA Attenuation. Best when set at 4.");
-	addAndMakeVisible(paPwrCbox);
 
 	// try to get host ip before init
     // this should be expanded to allow selection if multiple network interfaces are present.
@@ -326,6 +372,8 @@ void RcbWifiEditor::startAcquisition()
         auxEnableButton->setEnabled(false);
         pollRateCbox->setEnabled(false);
         initButton->setEnabled(false);
+        sampleEventButton->setEnabled(false);
+        samplesNumLabel->setEnabled(false);
 
 		timeInt = 0;
         stopTimer(2); // stop battery voltage update timer
@@ -347,7 +395,8 @@ void RcbWifiEditor::startAcquisition()
         auxEnableButton->setEnabled(true);
         pollRateCbox->setEnabled(true);
         initButton->setEnabled(true);
-
+        sampleEventButton->setEnabled(true);
+        samplesNumLabel->setEnabled(true);
 	}
 }
 
@@ -437,6 +486,8 @@ void RcbWifiEditor::stopAcquisition()
     auxEnableButton->setEnabled(true);
     pollRateCbox->setEnabled(true);
     initButton->setEnabled(true);
+    sampleEventButton->setEnabled(true);
+    samplesNumLabel->setEnabled(true);
 
 }
 
@@ -541,6 +592,10 @@ void RcbWifiEditor::buttonClicked(Button* button)
                         // get RHD AUX enable state.  will affect resize buffers
                         node->auxEnableState = auxEnableButton->getToggleState();
                         
+                        // get Sample Event enable state.
+                        node->sampleEventEnableState = sampleEventButton->getToggleState();
+                        node->samplesForEvent = samplesNumLabel->getText().getIntValue();
+                        
                         // update signal chain with new actual sample rate and number of channels
                         CoreServices::updateSignalChain(this);
                         
@@ -554,8 +609,8 @@ void RcbWifiEditor::buttonClicked(Button* button)
                         //LOGD("[dspw] MY dspCut = ",dspHpfCut);
                         std::stringstream stream;
                         stream << std::fixed << std::setprecision(1) << dspHpfCut;
-                        std::string s = stream.str();
-                        dspCutNumLabel->setText(s, dontSendNotification);
+                        std::string strSt = stream.str();
+                        dspCutNumLabel->setText(strSt, dontSendNotification);
                         
                         // get upper BW filter from combo box
                         node->rhdUpBwInt = upBwCbox->getSelectedItemIndex();
@@ -611,13 +666,23 @@ void RcbWifiEditor::buttonClicked(Button* button)
                                             "OK", 0);
             }
         }
-        else
+        else if (chStartIsValid == false)
         {
             LOGD("[dspw] UI Channel values failed ");
             
             AlertWindow::showMessageBox(AlertWindow::NoIcon,
-                                        "Number of channels + channel Start canot be greater than 33.",
+                                        "Number of channels + channel Start cannot be greater than 33.",
                                         "Check your RCB Plugin UI Channel settings. \r\n\r\n"
+                                        "Press Initialize button to try again.",
+                                        "OK", 0);
+        }
+        else if (sampleEventIsValid == false)
+        {
+            LOGD("[dspw] Sample Event Number values failed ");
+            
+            AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                                        "Sample Event Number must be between 1 and 200000.",
+                                        "Check your RCB Plugin Samples settings. \r\n\r\n"
                                         "Press Initialize button to try again.",
                                         "OK", 0);
         }
@@ -635,16 +700,22 @@ void RcbWifiEditor::buttonClicked(Button* button)
         node->initPassed = false;
         initButton->setLabel("Init");
     }
+    else if (button == sampleEventButton)
+    {
+        // get toggle state
+        node->initPassed = false;
+        initButton->setLabel("Init");
+    }
 }
-
 
 void RcbWifiEditor::labelTextChanged(juce::Label* label)
 {
-	bool ipIsValid = false;
-	bool hostIpIsValid = false;
-	bool portIsValid = false;
-	bool dspHpfIsValid = false;
-    bool chStartIsValid = false;
+//	bool ipIsValid = false;
+//	bool hostIpIsValid = false;
+//	bool portIsValid = false;
+//	bool dspHpfIsValid = false;
+//    bool chStartIsValid = false;
+//    bool sampleEventIsValid = false;
 
 	node->initPassed = false;
 	initButton->setLabel("Init");
@@ -756,6 +827,30 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
         else
         {
             chStartIsValid = true;
+            //uiIsOk = true;
+        }
+    }
+    else if (label == samplesNumLabel)
+    {
+        Value val = label->getTextValue();
+        int requestedValue = int(val.getValue());
+        LOGD("[dspw] sampleEventNum requested value = ",String(int(requestedValue)));
+        
+        if (requestedValue < 1 || requestedValue > 200000)
+        {
+            sampleEventIsValid = false;
+            uiIsOk =false;
+            
+            AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                "Sample Event Number value " + String(int(requestedValue)) + " is not valid \r\n"
+                "Value must be between 1 and 200000.",
+                "Please check your Sample Event Number setting. \r\n"
+                "",
+                "OK", 0);
+        }
+        else
+        {
+            sampleEventIsValid = true;
             uiIsOk = true;
         }
     }
@@ -861,8 +956,7 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
             int pollRate = pollRateCbox->getText().getIntValue();
             timer2Disable = false;
             timer2Rate = pollRate;
-        }
-        
+        }        
     }
 	else if (comboBoxThatHasChanged == upBwCbox)
 	{
@@ -895,7 +989,8 @@ void RcbWifiEditor::saveCustomParametersToXml(XmlElement* xmlNode)
 	parameters->setAttribute("paPwr", paPwrCbox->getSelectedItemIndex());
     parameters->setAttribute("pollRate", pollRateCbox->getSelectedItemIndex());
     parameters->setAttribute("auxEnBut", auxEnableButton->getToggleState());
-
+    parameters->setAttribute("sampleEnBut", sampleEventButton->getToggleState());
+    parameters->setAttribute("samplesNum", samplesNumLabel->getText());
 }
 
 void RcbWifiEditor::loadCustomParametersFromXml(XmlElement* xmlNode)
@@ -917,7 +1012,8 @@ void RcbWifiEditor::loadCustomParametersFromXml(XmlElement* xmlNode)
 			paPwrCbox->setSelectedItemIndex(subNode->getIntAttribute("paPwr", 5), dontSendNotification);
             pollRateCbox->setSelectedItemIndex(subNode->getIntAttribute("pollRate", 0), dontSendNotification);
             auxEnableButton->setToggleState(subNode->getBoolAttribute("auxEnBut", false), dontSendNotification);
-
+            sampleEventButton->setToggleState(subNode->getBoolAttribute("sampleEnBut", false), dontSendNotification);
+            samplesNumLabel->setText(subNode->getStringAttribute("samplesNum", ""),dontSendNotification);
 		}
 	}
     // this is needed due to possible old hostAddr saved in Paremeters

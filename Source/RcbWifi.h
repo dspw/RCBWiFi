@@ -50,7 +50,7 @@ const float BATT_STREAM_THRESH = 3.7;
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.5";
+const String PLUGIN_VERSION = "v0.1.6";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2
@@ -59,7 +59,7 @@ const String PLUGIN_VERSION = "v0.1.5";
 
 namespace RcbWifiNode
 {
-    class RcbWifi : public DataThread   //, public Timer
+    class RcbWifi : public DataThread, private Timer
     {
 
     public:
@@ -92,6 +92,15 @@ namespace RcbWifiNode
         /** Attempts to reconnect to the socket */
         void tryToConnect();
 
+        // ** Allows the DataThread plugin to respond to messages sent by other processors */
+        void handleBroadcastMessage(String msg) override;
+        
+        /** Allow the thread to respond to messages sent by other plugins */
+      //   void handleBroadcastMessage (const String& msg);
+
+        // ** Allows the DataThread plugin to handle a config message while acquisition is not active. */
+        String handleConfigMessage(String msg) override;
+        
         /** Network stream parameters (must match features of incoming data) */
         int port = 0;
         float sample_rate = 0;
@@ -99,12 +108,6 @@ namespace RcbWifiNode
         uint16_t data_offset = 0;
         int num_samp = 0;
         int num_channels = 0;
-
-        // ** Allows the DataThread plugin to respond to messages sent by other processors */
-        void handleBroadcastMessage(String msg) override;
-
-        // ** Allows the DataThread plugin to handle a config message while acquisition is not active. */
-        String handleConfigMessage(String msg) override;
         
         // RCB Specific
         int desiredSampleRate = 0;
@@ -114,7 +117,10 @@ namespace RcbWifiNode
         int rhdLowBwInt = 0;
         //int upBwRh1Dac1;  // not used
         int chShift = 0x00;
+        
+        int samplesForEvent = 1;
         bool auxEnableState = false;
+        bool sampleEventEnableState = false;
 
         String ipNumStr = "";
         String myHostStr = "";
@@ -141,7 +147,9 @@ namespace RcbWifiNode
         double setDspCutoffFreq(double newDspCutoffFreq, float sampleRate);
         
     private:
-
+        void timerCallback() override;
+        int ttlLineAdjust = 0x01;
+        
         /** Receives data from network and pushes it to the DataBuffer */
         bool updateBuffer() override; //oe
 
@@ -156,6 +164,7 @@ namespace RcbWifiNode
 
         /** Local event state variable */
         uint64 eventState = 0;
+        uint64 eventStateBcast = 0;
 
         /** True if socket is connected */
         bool connected = false;

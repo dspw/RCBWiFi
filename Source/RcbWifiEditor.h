@@ -138,6 +138,13 @@ namespace RcbWifiNode
         
         // RHD Aux Inputs enable
         ScopedPointer<UtilityButton> auxEnableButton;
+        ScopedPointer<Label> auxEnableLabel;
+        
+        // Sample Event enable
+        ScopedPointer<Label> sampleEventLabel;
+        ScopedPointer<Label> samplesNumLabel;
+        ScopedPointer<UtilityButton> sampleEventButton;
+        ScopedPointer<Label> numSamplesEventLabel;
 
         // Parent node
         RcbWifi* node;
@@ -151,6 +158,13 @@ namespace RcbWifiNode
         
         // indicates values selected and entered on UI are ok to send to RCB
         bool uiIsOk = true;
+        
+        bool ipIsValid = false;
+        bool hostIpIsValid = false;
+        bool portIsValid = false;
+        bool dspHpfIsValid = false;
+        bool chStartIsValid = true;
+        bool sampleEventIsValid = true;
 
         // IP stuff
         IPAddress getCurrentIpAddress();

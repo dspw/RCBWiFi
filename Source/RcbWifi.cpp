@@ -91,8 +91,102 @@ RcbWifi::~RcbWifi()
 //}
 
 void RcbWifi::handleBroadcastMessage(String msg)
+//void RcbWifi::handleBroadcastMessage(const String& msg)
 {
+    //LOGC("[dspw] bcast msg = ",msg);
+   
+    /// DSPW, RCB, Command, Event#, Value
+    StringArray parts = StringArray::fromTokens (msg, " ", "");
+    //LOGC("[dspw] parts[0] = ",parts[0]); //DSPW - Manuf
+    //LOGC("[dspw] parts[1] = ",parts[1]); //RCB - HW Version
+    //LOGC("[dspw] parts[2] = ",parts[2]); //Command Type - Trigger vs Timer
+    //LOGC("[dspw] parts[3] = ",parts[3]); //TTL Event #
+    //LOGC("[dspw] parts[4] = ",parts[4]); //Value - Trigger 0/1 vs Timer period
+    
+    int timerEventCmd = parts[3].getIntValue();
+    
+    // each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
+    int eventAdjust[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+    //timerEventNum = parts[3].getIntValue();
+    ttlLineAdjust = eventAdjust[timerEventCmd - 1];
+    
+        if (parts[0].equalsIgnoreCase ("DSPW"))
+        {
+            if (parts[1].equalsIgnoreCase ("RCB"))
+            {
+                if (parts.size() > 2)
+                {
+                    String command = parts[2];
+                    int timerValue = parts[4].getIntValue();
+                         
+                    if (command.equalsIgnoreCase ("TRIGGER"))  //Trigger vs Timer
+                    {
+                        // Set(1) or Clear(0) Event #
+                        if (parts.size() == 5)
+                        {
+                            int ttlLine = parts[3].getIntValue(); // - 1;
+                            
+                            if (ttlLine < 1 || ttlLine > 8)
+                                //    if (ttlLine < 0 || ttlLine > 7)
+                                return;
+                            
+                            int eventNum = parts[4].getIntValue();
+                            
+                            if (eventNum < 0 || eventNum > 1)
+                                return;
+                            
+                            //LOGC("[dspw] event State = ",String(eventState));
+                            //eventState = 0;
+                            // eventStateBcast = 0x01;
+                            if (eventNum == 1)
+                            {
+                                eventStateBcast =  ttlLineAdjust;
+                                //LOGC("[dspw] eventStateBcast = ",String(eventStateBcast));
+                            } else if (eventNum == 0)
+                            {
+                                eventStateBcast = 0;
+                                //LOGC("[dspw] eventStateBcast= ",String(eventStateBcast));
+                            }
+                            // LOGC("[dspw] event State = ",String(eventState));
+                        }
+                    }
+                    else if (command.equalsIgnoreCase ("TIMER"))
+                    {
+                        LOGC("[dspw] timerValue = ",timerValue);
+                        // Start timer, change event #x event state 0/1 at timer period transitions.
+                        if (timerValue == 0)
+                        {
+                            if (isTimerRunning() == true)
+                                stopTimer();
+                            
+                            eventStateBcast = 0x00;
+                            //LOGC("[dspw] timerValue Stop = ",timerValue);
+                            return;
+                        } else
+                        {
+                            int eventDurationMs = parts[4].getIntValue();
+                            //LOGC("[dspw] Timer Duration = ",parts[4]); //Value - Trigger 0/1 vs Timer period
+                            if (eventDurationMs < 10 || eventDurationMs > 5000)
+                                return;
+                            startTimer(eventDurationMs);
+                            //startTimer(1000);
+                        }
+                    }
+                }
+            }
+        }
+}
 
+void RcbWifi::timerCallback()
+{
+    //eventStateBcast = 0x04;
+    //LOGC("[dspw] Timer Event Num = ",timerEventNum);
+    //LOGC("[dspw] eventStateBcast = ",eventStateBcast);
+    if (eventStateBcast == 0)
+        eventStateBcast = ttlLineAdjust;// each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
+    //eventStateBcast = 0x4;// each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
+    else
+        eventStateBcast = 0;
 }
 
 String RcbWifi::handleConfigMessage(String msg)
@@ -115,7 +209,6 @@ void RcbWifi::resizeBuffers()
     }
     
 	recvBufSize = 40 + (((num_channels + 2) * num_samp) * 2);
-    
 	recvbuf = (uint16_t*)realloc(recvbuf, recvBufSize);
     convbuf = (float*)realloc(convbuf, convBufSize);
 	auxbuf = (uint16_t*)realloc(auxbuf,  num_samp * 8);
@@ -204,9 +297,9 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
 	EventChannel::Settings eventSettings{
 		   EventChannel::Type::TTL,
 		   "Events",
-		   "description",
-		   "identifier",
-		   sourceStreams->getFirst(),//  getFirst(),
+		   "Events acquired from network packet",
+		   "rcbwifi.events",
+		   sourceStreams->getFirst(),
 		   8  // max number of events want to use
 	};
 
@@ -260,7 +353,8 @@ bool RcbWifi::startAcquisition()
 	//LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
 	if (initPassed == true && (batteryInit > BATT_INIT_THRESH - 0.25)) // and batt poll is > ?
 	{
-		//sourceBuffers[0]->clear();  //macos
+		sourceBuffers[0]->clear();  //macos
+        // UDP packet inits
 		firstPacket = 1;
 		hit = 0;
 		miss = 0;
@@ -308,6 +402,9 @@ bool RcbWifi::startAcquisition()
 
 bool RcbWifi::stopAcquisition()
 {
+    if (isTimerRunning() == true)
+        stopTimer();
+    
 	seqNum = 0;
 	firstPacket = 1;
     String myTime = Time::getCurrentTime().toString(false,true);
@@ -401,12 +498,13 @@ bool RcbWifi::updateBuffer()
 			delayed++;
 			nextsn = seqNum + 1; // macos
 			LOGD("[dspw] port-",String(port),"  delayed seqNum = ",(String::toHexString(seqNum)));
+            // delayed is not a normal occurance.
+            //rarely happens and indicates network congestinon or bad choice for router.
 		}
 		else {
 			miss += seqNum - nextsn;
 			nextsn = seqNum + 1;
 			hit++;
-            //should mark data samples as missed?
 		}
 
 		// using the transpose version from EphysSocket
@@ -432,22 +530,40 @@ bool RcbWifi::updateBuffer()
                     convbuf[k++] = 0.0000374 * (float)auxbuf[j + 1];
                 }
             }
-
-			sampleNumbers.set(i, total_samples + i);
-			ttlEventWords.set(i, eventState);
-
-			eventState = digInputs;
-
-			/* OE Josh test code to toggle TTL events
-			if ((total_samples + i) % 15000 == 0)
-			{
-				if (eventState == 0)
-					eventState = 0xf;// each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
-				else
-					eventState = 0;
-			}
-			*/
+                   
+			/* OE Josh test code from EphysSocket to toggle TTL events
+            if ((total_samples + i) % 15000 == 0)
+            {
+                            if (eventState == 0)
+                                eventState = 0xf;// each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
+                            else
+                                eventState = 0;
+                        }
+            */
+            
+            // DSPW version for RCB WiFi plugin
+            // will generate a TTL event at the Sample Rate x user input samplesForEvent vaule
+            //ex. if samplesForEvent is = 1 then TTL event will transition at the RCB Sample rate
+            // each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
+            if (sampleEventEnableState == true)
+            {
+                if ((total_samples + i) % (samplesForEvent) == 0)
+            //  if ((total_samples + i) % (10*(0+1)) == 0) //testcase
+                {
+                    if ((eventState & 0x80) == 0)
+                        eventState = 0x80;  // using event #8 
+                    else
+                        eventState = 0;
+                }
+                eventState = eventState | digInputs |eventStateBcast;
+            } else
+                eventState = digInputs | eventStateBcast;
+            
+          //  eventState = eventState | eventStateBcast;
+            sampleNumbers.set(i, total_samples + i);
+            ttlEventWords.set(i, eventState);
 		}
+        
 		sourceBuffers[0]->addToBuffer(convbuf,
 			sampleNumbers.getRawDataPointer(),
 			timestamps.getRawDataPointer(),
