@@ -59,9 +59,9 @@ const String PLUGIN_VERSION = "v0.1.6";
 
 namespace RcbWifiNode
 {
-    class RcbWifi : public DataThread, private Timer
+    class RcbWifi : public DataThread,
+        private MultiTimer //TimerTimer
     {
-
     public:
         /** Constructor */
         RcbWifi(SourceNode* sn);
@@ -147,8 +147,12 @@ namespace RcbWifiNode
         double setDspCutoffFreq(double newDspCutoffFreq, float sampleRate);
         
     private:
-        void timerCallback() override;
+      //  void timerCallback() override;
+        void timerCallback(int timerID) override;  //MultiTimer
         int ttlLineAdjust = 0x01;
+        int ttlLineAdjust0 = 0x01;
+        int ttlLineAdjust1 = 0x01;
+        int ttlLineAdjust2 = 0x01;
         
         /** Receives data from network and pushes it to the DataBuffer */
         bool updateBuffer() override; //oe
@@ -165,6 +169,11 @@ namespace RcbWifiNode
         /** Local event state variable */
         uint64 eventState = 0;
         uint64 eventStateBcast = 0;
+        uint64 eventStateTest = 0;
+        uint64 eventBcastTrigger = 0;
+        uint64 eventBcastTimer = 0;
+        uint64 eventBcastTriggerTimer = 0;
+        int bCastMode = 0;
 
         /** True if socket is connected */
         bool connected = false;

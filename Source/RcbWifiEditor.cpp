@@ -372,8 +372,10 @@ void RcbWifiEditor::startAcquisition()
         auxEnableButton->setEnabled(false);
         pollRateCbox->setEnabled(false);
         initButton->setEnabled(false);
-        sampleEventButton->setEnabled(false);
-        samplesNumLabel->setEnabled(false);
+        
+    // These 2 are ok to have enabled during aquisition
+    //    sampleEventButton->setEnabled(false);
+    //    samplesNumLabel->setEnabled(false);
 
 		timeInt = 0;
         stopTimer(2); // stop battery voltage update timer
@@ -703,8 +705,9 @@ void RcbWifiEditor::buttonClicked(Button* button)
     else if (button == sampleEventButton)
     {
         // get toggle state
-        node->initPassed = false;
-        initButton->setLabel("Init");
+        //node->initPassed = false;
+        //initButton->setLabel("Init");
+        node->sampleEventEnableState = sampleEventButton->getToggleState();
     }
 }
 
