@@ -720,10 +720,12 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 //    bool chStartIsValid = false;
 //    bool sampleEventIsValid = false;
 
-	node->initPassed = false;
-	initButton->setLabel("Init");
+	//node->initPassed = false;
+	//initButton->setLabel("Init");
 	if (label == rcbIpNumLabel)
 	{
+        node->initPassed = false;
+        initButton->setLabel("Init");
 		IPAddress ip = IPAddress(rcbIpNumLabel->getText());
 		if (ip.toString() == rcbIpNumLabel->getText())
 		{
@@ -746,6 +748,8 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 	}
 	else if (label == hostIpNumLabel)
 	{
+        node->initPassed = false;
+        initButton->setLabel("Init");
 		IPAddress host = IPAddress(hostIpNumLabel->getText());
 		if (host.toString() == hostIpNumLabel->getText())
 		{
@@ -768,6 +772,8 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 	}
 	else if (label == portNumLabel)
 	{
+        node->initPassed = false;
+        initButton->setLabel("Init");
 		Value val = label->getTextValue();
 		int requestedValue = int(val.getValue());
 
@@ -789,6 +795,8 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 	}
 	else if (label == dspCutNumLabel)
 	{
+        node->initPassed = false;
+        initButton->setLabel("Init");
 		Value val = label->getTextValue();
         float requestedValue = float(val.getValue());
         LOGD("[dspw] dspCut requested value = ",String(float(requestedValue)));
@@ -809,6 +817,8 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 	}
     else if (label == chStartNumLabel)
     {
+        node->initPassed = false;
+        initButton->setLabel("Init");
         Value val = label->getTextValue();
         int requestedValue = int(val.getValue());
         LOGD("[dspw] chStartNum requested value = ",String(int(requestedValue)));
@@ -835,6 +845,8 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
     }
     else if (label == samplesNumLabel)
     {
+        //node->initPassed = false;
+        //initButton->setLabel("Init");
         Value val = label->getTextValue();
         int requestedValue = int(val.getValue());
         LOGD("[dspw] sampleEventNum requested value = ",String(int(requestedValue)));
@@ -853,6 +865,7 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
         }
         else
         {
+            node->samplesForEvent = requestedValue;
             sampleEventIsValid = true;
             uiIsOk = true;
         }

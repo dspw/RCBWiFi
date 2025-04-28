@@ -107,7 +107,6 @@ void RcbWifi::handleBroadcastMessage(String msg)
     
     // each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
     int eventAdjust[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
-    //timerEventNum = parts[3].getIntValue();
     ttlLineAdjust = eventAdjust[timerEventCmd - 1];
     
         if (parts[0].equalsIgnoreCase ("DSPW"))
@@ -117,8 +116,7 @@ void RcbWifi::handleBroadcastMessage(String msg)
                 if (parts.size() > 2)
                 {
                     String command = parts[2];
-                    int timerValue = parts[4].getIntValue();
-                         
+                   
                     if (command.equalsIgnoreCase ("TRIGGER"))  //Trigger vs Timer
                     {
                         ttlLineAdjust0 = eventAdjust[timerEventCmd - 1];
@@ -126,92 +124,79 @@ void RcbWifi::handleBroadcastMessage(String msg)
                         if (parts.size() == 5)
                         {
                             int ttlLine = parts[3].getIntValue(); // - 1;
-                            
                             if (ttlLine < 1 || ttlLine > 8)
                                 //    if (ttlLine < 0 || ttlLine > 7)
                                 return;
                             
                             int eventNum = parts[4].getIntValue();
-                            
                             if (eventNum < 0 || eventNum > 1)
                                 return;
                             
-                            //LOGC("[dspw] event State = ",String(eventState));
-                            //eventState = 0;
-                            // eventStateBcast = 0x01;
                             if (eventNum == 1)
                             {
-                              //  eventStateBcast =  ttlLineAdjust;
                                 eventBcastTrigger =  ttlLineAdjust0;
-                                //LOGC("[dspw] eventStateBcast = ",String(eventStateBcast));
-                            } else if (eventNum == 0)
-                            {
-                                //eventStateBcast = 0;
-                                eventBcastTrigger = 0;
-                                //LOGC("[dspw] eventStateBcast= ",String(eventStateBcast));
                             }
-                            // LOGC("[dspw] event State = ",String(eventState));
+                            else if (eventNum == 0)
+                            {
+                                eventBcastTrigger = 0;
+                            }
                         }
                     }
                     else if (command.equalsIgnoreCase ("TIMER"))
                     {
                         if (parts.size() == 5)
                         {
+                            int eventDurationMs = parts[4].getIntValue();
                             ttlLineAdjust1 = eventAdjust[timerEventCmd - 1];
                             bCastMode = 1;
-                            LOGC("[dspw] timerValue = ",timerValue);
+                   //         LOGC("[dspw] timerValue = ",timerValue);
                             // Start timer, change event #x event state 0/1 at timer period transitions.
                             // Continue transitions until command to Stop (period = 0)
-                            if (timerValue == 0)
+                            if (eventDurationMs == 0)
                             {
                                 if (isTimerRunning(1) == true)
                                     stopTimer(1);
                                 
-                                //  eventStateBcast = 0x00;
                                 eventBcastTimer = 0x00;
-                                //LOGC("[dspw] timerValue Stop = ",timerValue);
                                 return;
-                            } else
+                            }
+                            else
                             {
-                                int eventDurationMs = parts[4].getIntValue();
-                                //LOGC("[dspw] Timer Duration = ",parts[4]); //Value - Trigger 0/1 vs Timer period
+                             //   int eventDurationMs = parts[4].getIntValue();
                                 if (eventDurationMs < 10 || eventDurationMs > 5000)
                                     return;
                                 startTimer(1, eventDurationMs);
-                                //startTimer(1000);
                             }
                         }
-                    }else if (command.equalsIgnoreCase ("TIMERPULSE"))  //Event Trigger with Timer
+                    }
+                    else if (command.equalsIgnoreCase ("TIMERPULSE"))  //Event Trigger with Timer
+                    {
+                        if (parts.size() == 5)
                         {
-                            if (parts.size() == 5)
+                            int timerValue = parts[4].getIntValue();
+                            bCastMode = 2;
+                            ttlLineAdjust2 = eventAdjust[timerEventCmd - 1];
+                      
+                            // Start timer, change event #x event state 0/1 at timer period transitions.
+                            // Only do one change event per command
+                            if (timerValue == 0)
                             {
-                                bCastMode = 2;
-                                ttlLineAdjust2 = eventAdjust[timerEventCmd - 1];
-                                //LOGC("[dspw] timerPulseValue = ",timerValue);
+                                if (isTimerRunning(2) == true)
+                                    stopTimer(2);
                                 
-                                // Start timer, change event #x event state 0/1 at timer period transitions.
-                                // Only do one change event per command
-                                if (timerValue == 0)
-                                {
-                                    if (isTimerRunning(2) == true)
-                                        stopTimer(2);
-                                    
-                                    //  eventStateBcast = 0x00;
-                                    eventBcastTriggerTimer = 0x00;
-                                    //LOGC("[dspw] timerValue Stop = ",timerValue);
-                                    return;
-                                } else
-                                {
-                                    // eventStateBcast =  ttlLineAdjust;
-                                    eventBcastTriggerTimer =  ttlLineAdjust2;
-                                    int eventDurationMs = parts[4].getIntValue();
-                                    //LOGC("[dspw] Timer Duration = ",parts[4]); //Value - Trigger 0/1 vs Timer period
-                                    if (eventDurationMs < 10 || eventDurationMs > 5000)
-                                        return;
-                                    startTimer(2, eventDurationMs);
-                                    //startTimer(1000);
-                                }
+                                eventBcastTriggerTimer = 0x00;
+                                //LOGC("[dspw] timerValue Stop = ",timerValue);
+                                return;
                             }
+                            else
+                            {
+                                eventBcastTriggerTimer =  ttlLineAdjust2;
+                                int eventDurationMs = parts[4].getIntValue();
+                                if (eventDurationMs < 10 || eventDurationMs > 5000)
+                                    return;
+                                startTimer(2, eventDurationMs);
+                            }
+                        }
                     }
                 }
             }
@@ -220,36 +205,29 @@ void RcbWifi::handleBroadcastMessage(String msg)
 
 void RcbWifi::timerCallback(int timerID) //timerCallback()
 {
-    //LOGC("[dspw] Timer Event Num = ",timerEventNum);
-    //LOGC("[dspw] eventStateBcast = ",eventStateBcast);
-    
     // each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
  
-    // timer 1 is used while streaming data. updates packet info and battery voltage display in plugin
+    // timer 1 is used with TIMER command
     if (timerID == 1)
     {
         //if (bCastMode == 1)
-        {
-           // LOGC("[dspw] eventBcastTimer = ",eventBcastTimer);
+       // {
+        
             if (eventBcastTimer == 0) // is TIMER
-                //   if (eventStateBcast == 0) // is TIMER
-            {  //eventStateBcast = ttlLineAdjust;
+            {
                 eventBcastTimer = ttlLineAdjust1;
-             //   LOGC("[dspw] eventBcastTimer 16 = ",eventBcastTimer);
             }
             else
-            {  //eventStateBcast = 0;
+            {
                 eventBcastTimer = 0;
-            //    LOGC("[dspw] eventBcastTimer 0 = ",eventBcastTimer);
             }
-        }
+      //  }
     }
-    // timer 1 is used while streaming data. updates packet info and battery voltage display in plugin
+    // timer 2 is used with TIMERPULSE command
     if (timerID == 2)
     {
         if (bCastMode == 2)  // is TIMERPULSE
         {
-            //eventStateBcast = 0;
             eventBcastTriggerTimer = 0;
             stopTimer(2);
         }
