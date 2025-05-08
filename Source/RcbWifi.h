@@ -61,6 +61,7 @@ namespace RcbWifiNode
 {
     class RcbWifi : public DataThread,
         private MultiTimer //TimerTimer
+
     {
     public:
         /** Constructor */

@@ -379,7 +379,7 @@ void RcbWifiEditor::startAcquisition()
 
 		timeInt = 0;
         stopTimer(2); // stop battery voltage update timer
-		startTimer(1, 1000); //packet update timer
+		startTimer(1, 2000); //packet update timer
 	}
 	else {
 		//re enable GUI

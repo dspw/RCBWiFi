@@ -70,6 +70,13 @@ RcbWifi::~RcbWifi()
 	free(recvbuf);
 	free(convbuf);
 	free(auxbuf);
+    
+    if (isTimerRunning(1) == true)
+        stopTimer(1);
+    
+    if (isTimerRunning(2) == true)
+        stopTimer(2);
+    
 	if (connected == true)
 	{
 		socket->shutdown();  // check if this is needed.
@@ -465,12 +472,12 @@ bool RcbWifi::stopAcquisition()
 		notify();
         LOGD( "[dspw] thread should exit");
 	}
-
-    if (initPassed == true)
+    
+/*    if (initPassed == true)
     {
         sendRCBTriggerPost(ipNumStr, "__SL_P_ULD=OFF");
     }
-    
+*/
 	if (waitForThreadToExit(1000))
 	{
 		LOGD("[dspw] RCB WiFi data thread exited.");
@@ -479,6 +486,12 @@ bool RcbWifi::stopAcquisition()
 	{
 		LOGD("[dspw] RCB WiFi data thread failed to exit, continuing anyway...");
 	}
+
+    // must be after waitForThreadToExit
+    if (initPassed == true)
+    {
+        sendRCBTriggerPost(ipNumStr, "__SL_P_ULD=OFF");
+    }
 
 	if (connected == true)
 	{
@@ -494,7 +507,7 @@ bool RcbWifi::stopAcquisition()
 bool RcbWifi::updateBuffer()
 {
 	int rc = socket->read(recvbuf, recvBufSize, true); //1444 1468
-
+    //LOGC("recBufSize = ", recvBufSize);
 	if (rc == -1)
     {
 		LOGD("[dspw] RCB WiFi : Data shape mismatch ");
