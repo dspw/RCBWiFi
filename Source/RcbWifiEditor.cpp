@@ -69,7 +69,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     rcbIpNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     rcbIpNumLabel->setColour(Label::textColourId, Colours::black);
     rcbIpNumLabel->setColour(Label::backgroundColourId, Colours::white);
-    rcbIpNumLabel->setEditable(true);
+    rcbIpNumLabel->setEditable(true,false,true);
     rcbIpNumLabel->addListener(this);
     addAndMakeVisible(rcbIpNumLabel);
 
@@ -85,7 +85,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     hostIpNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     hostIpNumLabel->setColour(Label::textColourId, Colours::black);
     hostIpNumLabel->setColour(Label::backgroundColourId, Colours::white);
-    hostIpNumLabel->setEditable(true);
+    hostIpNumLabel->setEditable(true,false,true);
     hostIpNumLabel->addListener(this);
     addAndMakeVisible(hostIpNumLabel);
     //hostIpIsValid = false;
@@ -105,7 +105,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     portNumLabel->setBounds(10, 109, 40, 15); //42
     portNumLabel->setColour(Label::textColourId, Colours::black);
     portNumLabel->setColour(Label::backgroundColourId, Colours::white);
-    portNumLabel->setEditable(true);
+    portNumLabel->setEditable(true,false,true);
     portNumLabel->addListener(this);
     addAndMakeVisible(portNumLabel);
 
@@ -137,7 +137,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     dspCutNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     dspCutNumLabel->setColour(Label::textColourId, Colours::black);
     dspCutNumLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
-    dspCutNumLabel->setEditable(true);
+    dspCutNumLabel->setEditable(true,false,true);
     dspCutNumLabel->addListener(this);
     addAndMakeVisible(dspCutNumLabel);
 
@@ -221,11 +221,10 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     chStartNumLabel = new Label("chStartNumLabel", "1");
     chStartNumLabel->setBounds(228, 74, 21, 17);
     chStartNumLabel->setTooltip("Enter Starting Channel. Default is 1.");
-
     chStartNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     chStartNumLabel->setColour(Label::textColourId, Colours::black);
     chStartNumLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
-    chStartNumLabel->setEditable(true);
+    chStartNumLabel->setEditable(true,false,true);
     chStartNumLabel->addListener(this);
     addAndMakeVisible(chStartNumLabel);
 
@@ -263,17 +262,29 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     auxEnableButton->setToggleState(false, dontSendNotification);
     
     // Sample Event Enable
-    sampleEventButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
+    sampleEventButton = new UtilityButton("Set", Font("Small Text", 13, Font::plain));
+    //sampleEventButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
     sampleEventButton->setRadius(3.0f);
-    sampleEventButton->setBounds(260, 74, 50, 18);
+    sampleEventButton->setBounds(260, 74, 27, 18);
+   // sampleEventButton->setBounds(260, 74, 50, 18);
     sampleEventButton->addListener(this);
     sampleEventButton->setClickingTogglesState(true);
     sampleEventButton->setTooltip("Enable Sample Event #8 ");
     addAndMakeVisible(sampleEventButton);
     sampleEventButton->setToggleState(false, dontSendNotification);
     
+    sampleEventNumLabel = new Label("sampleEventNumLabel", "1");
+    sampleEventNumLabel->setBounds(290, 75, 18, 16);
+    sampleEventNumLabel->setTooltip("Enter Starting Channel. Default is 1.");
+    sampleEventNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
+    sampleEventNumLabel->setColour(Label::textColourId, Colours::black);
+    sampleEventNumLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
+    sampleEventNumLabel->setEditable(true,false,true);
+    sampleEventNumLabel->addListener(this);
+    addAndMakeVisible(sampleEventNumLabel);
+    
     // Sample Event Settings
-    sampleEventLabel = new Label("sampleEventLabel", "Event 8");
+    sampleEventLabel = new Label("sampleEventLabel", "Event #");
     sampleEventLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     sampleEventLabel->setBounds(257, 62, 85, 12);
     sampleEventLabel->setColour(Label::textColourId, Colours::black);
@@ -291,7 +302,8 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     samplesNumLabel->setColour(Label::textColourId, Colours::black);
     samplesNumLabel->setColour(Label::backgroundColourId, Colours::white);
     samplesNumLabel->setTooltip("Enter Number of Samples in each Sample Event ");
-    samplesNumLabel->setEditable(true);
+    samplesNumLabel->setEditable(true,false,true);
+    
     samplesNumLabel->addListener(this);
     addAndMakeVisible(samplesNumLabel);
     
@@ -841,6 +853,41 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
         {
             chStartIsValid = true;
             //uiIsOk = true;
+        }
+    }
+    else if (label == sampleEventNumLabel)
+    {
+        // not needed as only affects the event generator.  No changes sent to the RCB device.
+        //node->initPassed = false;
+        //initButton->setLabel("Init");
+        
+        Value val = label->getTextValue();
+        int requestedValue = int(val.getValue());
+        LOGD("[dspw] sampleEventNum requested value = ",String(int(requestedValue)));
+        
+        int smplEventNum = chanCbox->getText().getIntValue();
+        if (requestedValue < 1 || requestedValue -1 > 8)
+        {
+            //smplEventNumIsValid = false;
+            uiIsOk =false;
+            label->setText("1", sendNotification);
+            smplEventNumIsValid = true;
+            
+            AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                "Sample Event Number value " + String(int(requestedValue)) + " is not valid \r\n"
+                "Event Number must be between 1 and 8.",
+                "Please check your Event Number setting. \r\n"
+                "",
+                "OK", 0);
+        }
+        else
+        {
+            smplEventNumIsValid = true;
+            
+            // each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
+            int eventAdjust[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+            node->smplEventNum = eventAdjust[requestedValue - 1];
+            uiIsOk = true;
         }
     }
     else if (label == samplesNumLabel)

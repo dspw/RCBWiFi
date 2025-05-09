@@ -612,8 +612,10 @@ bool RcbWifi::updateBuffer()
                 if ((total_samples + i) % (samplesForEvent) == 0)
             //  if ((total_samples + i) % (10*(0+1)) == 0) //testcase
                 {
-                    if ((eventStateTest & 0x80) == 0)
-                        eventStateTest = 0x80;  // using event #8
+                  //  if ((eventStateTest & 0x80) == 0)
+                    //    eventStateTest = 0x80;  // using event #8
+                    if ((eventStateTest & smplEventNum) == 0)
+                        eventStateTest = smplEventNum;  // using event #8
                     else
                         eventStateTest = 0;
                 }

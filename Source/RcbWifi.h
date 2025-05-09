@@ -50,7 +50,7 @@ const float BATT_STREAM_THRESH = 3.7;
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.6";
+const String PLUGIN_VERSION = "v0.1.7";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2
@@ -122,6 +122,8 @@ namespace RcbWifiNode
         int samplesForEvent = 1;
         bool auxEnableState = false;
         bool sampleEventEnableState = false;
+        int smplEventNum = 0x1;
+        //uint64 eventStateTest = 0;
 
         String ipNumStr = "";
         String myHostStr = "";

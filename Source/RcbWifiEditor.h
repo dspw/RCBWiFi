@@ -145,6 +145,8 @@ namespace RcbWifiNode
         ScopedPointer<Label> samplesNumLabel;
         ScopedPointer<UtilityButton> sampleEventButton;
         ScopedPointer<Label> numSamplesEventLabel;
+        
+        ScopedPointer<Label>sampleEventNumLabel;
 
         // Parent node
         RcbWifi* node;
@@ -165,6 +167,7 @@ namespace RcbWifiNode
         bool dspHpfIsValid = false;
         bool chStartIsValid = true;
         bool sampleEventIsValid = true;
+        bool smplEventNumIsValid = true;
 
         // IP stuff
         IPAddress getCurrentIpAddress();
