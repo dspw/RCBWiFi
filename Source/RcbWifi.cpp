@@ -52,9 +52,8 @@ sample_rate(DEFAULT_SAMPLE_RATE)
 	recvbuf = (uint16_t*)malloc(recvBufSize);
 
 	convBufSize = 0 + (((num_channels)*num_samp) * 4);
-	//convBufSize = 0 + (((num_channels + 3)*num_samp) * 4); // with aux
+	//convBufSize = 0 + (((num_channels + 3)*num_samp) * 4); // with aux, done later
 	convbuf = (float*)malloc(convBufSize);
-
 	auxbuf = (uint16_t*)malloc(8*num_samp);
 }
 
@@ -98,7 +97,6 @@ RcbWifi::~RcbWifi()
 //}
 
 void RcbWifi::handleBroadcastMessage(String msg)
-//void RcbWifi::handleBroadcastMessage(const String& msg)
 {
     //LOGC("[dspw] bcast msg = ",msg);
    
@@ -124,7 +122,7 @@ void RcbWifi::handleBroadcastMessage(String msg)
                 {
                     String command = parts[2];
                    
-                    if (command.equalsIgnoreCase ("TRIGGER"))  //Trigger vs Timer
+                    if (command.equalsIgnoreCase ("TRIGGER"))
                     {
                         ttlLineAdjust0 = eventAdjust[timerEventCmd - 1];
                         // Set(1) or Clear(0) Event #
@@ -153,6 +151,8 @@ void RcbWifi::handleBroadcastMessage(String msg)
                     {
                         if (parts.size() == 5)
                         {
+                            if (isTimerRunning(1) == true)
+                                stopTimer(1);
                             int eventDurationMs = parts[4].getIntValue();
                             ttlLineAdjust1 = eventAdjust[timerEventCmd - 1];
                             bCastMode = 1;
@@ -172,6 +172,7 @@ void RcbWifi::handleBroadcastMessage(String msg)
                              //   int eventDurationMs = parts[4].getIntValue();
                                 if (eventDurationMs < 10 || eventDurationMs > 5000)
                                     return;
+                              
                                 startTimer(1, eventDurationMs);
                             }
                         }
@@ -284,8 +285,6 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
 	OwnedArray<DeviceInfo>* devices,
 	OwnedArray<ConfigurationObject>* configurationObjects)
 {
-    //LOGD("[dspw] In updateSettings()");
-   
 	continuousChannels->clear();
 	eventChannels->clear();
 	spikeChannels->clear();
@@ -312,7 +311,8 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
 
 	for (int ch = 0; ch < num_channels; ch++)
 	{
-		ContinuousChannel::Settings channelSettings{
+		ContinuousChannel::Settings channelSettings
+        {
 			ContinuousChannel::Type::ELECTRODE,
 			"CH" + String(ch + 1),
 			"Channel acquired via RCB UDP network stream",  // "description"
@@ -321,9 +321,7 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
 			data_scale, //0.195
 
 			stream
-			
 		};
-
 		continuousChannels->add(new ContinuousChannel(channelSettings));
 		continuousChannels->getLast()->setUnits("uV");
 	}
@@ -332,7 +330,8 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
     {
         for (int ch = 0; ch < 3; ch++)
         {
-            ContinuousChannel::Settings channelSettings{
+            ContinuousChannel::Settings channelSettings
+            {
                 ContinuousChannel::AUX,
                 "_AUX" + String(ch + 1),
                 "Aux input channel RCB UDP network stream",
@@ -347,7 +346,8 @@ void RcbWifi::updateSettings(OwnedArray<ContinuousChannel>* continuousChannels,
         }
     }
 
-	EventChannel::Settings eventSettings{
+	EventChannel::Settings eventSettings
+    {
 		   EventChannel::Type::TTL,
 		   "Events",
 		   "Events acquired from network packet",
@@ -402,8 +402,8 @@ bool RcbWifi::startAcquisition()
 	// consider resending init messages ?  could call setRCBTokens() ?
     //String myTime = Time::getCurrentTime().toString(false,true);
     //LOGC("[dspw] Start Time = ",myTime);
-    
 	//LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
+    
 	if (initPassed == true && (batteryInit > BATT_INIT_THRESH - 0.25)) // and batt poll is > ?
 	{
 		sourceBuffers[0]->clear();  //macos
@@ -435,6 +435,9 @@ bool RcbWifi::startAcquisition()
             String myTime = Time::getCurrentTime().toString(false,true);
             LOGC("[dspw] Start Time = ",myTime);
             LOGC("[dspw] StartAcq batteryInit =  ",batteryInit);
+            
+            //sendRCBTriggerPut( "DSPW RCB TIMER 1 1000"); // moved to editor
+            
 			return true;
 		}
 	}
@@ -473,11 +476,6 @@ bool RcbWifi::stopAcquisition()
         LOGD( "[dspw] thread should exit");
 	}
     
-/*    if (initPassed == true)
-    {
-        sendRCBTriggerPost(ipNumStr, "__SL_P_ULD=OFF");
-    }
-*/
 	if (waitForThreadToExit(1000))
 	{
 		LOGD("[dspw] RCB WiFi data thread exited.");
@@ -613,9 +611,9 @@ bool RcbWifi::updateBuffer()
             //  if ((total_samples + i) % (10*(0+1)) == 0) //testcase
                 {
                   //  if ((eventStateTest & 0x80) == 0)
-                    //    eventStateTest = 0x80;  // using event #8
+                  //    eventStateTest = 0x80;  // using event #8
                     if ((eventStateTest & smplEventNum) == 0)
-                        eventStateTest = smplEventNum;  // using event #8
+                        eventStateTest = smplEventNum;  // user selected event
                     else
                         eventStateTest = 0;
                 }
@@ -682,6 +680,48 @@ void RcbWifi::sendRCBTriggerPost(String ipNumStr, String msgStr)
 	}
 }
 
+// added to send Put message to Broadcast Handler via OE HTTP Server at 127.0.0.1
+// has been moved to editor, still here for reference only
+void RcbWifi::sendRCBTriggerPut(String msgStr)
+{
+    //initPassed = false;
+   // this->ipNumStr = ipNumStr;
+    
+    DynamicObject* obj = new DynamicObject();
+    obj->setProperty("text",msgStr);
+    var json (obj);
+    String s = JSON::toString(json);
+    URL urlPut = URL("http://localhost:37497/api/message").withPOSTData(s);  //this approach needed for linux
+
+    int statusCode = 0;
+    
+    //LOGD("POST ipNumStr - ", ipNumStr);
+    //LOGD("POST msgStr - ", msgStr);
+    LOGC("[dspw] PUT str URL - ", urlPut.toString(true));
+    LOGC("[dspw] PUT str data - ", urlPut.getPostData());
+    
+    std::unique_ptr<InputStream> putStream(urlPut.createInputStream(true, nullptr, nullptr, {"Content-Type: application/json"}, 1000, &responseHeaders, &statusCode, 5, "PUT"));
+        
+    if (putStream != nullptr)
+    {
+        initPassed = true;
+        String putStr = putStream->readEntireStreamAsString();
+        LOGC("[dspw] PUT Stream StatusCode = ",statusCode);
+        if (statusCode != 204)
+        LOGC("[dspw] PUT Stream = ",putStr);
+    }
+    else
+    {
+      //  initPassed = false;
+        AlertWindow::showMessageBox(AlertWindow::NoIcon,
+            "OE HTTP Server not found at IP address " + ipNumStr,
+            "Please check your IP address setting. \r\n\r\n"
+            "Press Initialize button to try again.",
+            "OK", 0);
+    }
+}
+
+
 void RcbWifi::setRCBTokens()
 {
 	// only called from Init Button
@@ -707,14 +747,15 @@ void RcbWifi::setRCBTokens()
 	//String rhdChMaskStr = (chMask[num_channels - 1]) + " 6"; //the "6" is needed in all masks for correct aux sequence
     //LOGC("[dspw] rhdChMaskStr -  ",rhdChMaskStr);
     
+    // new approach
     String rhdChMaskShftStr = String::toHexString(chShftMask[num_channels - 1] << (chShift - 1)) + " 6" ; //the "6" is needed in all masks for correct aux sequence
    
-    //LOGD("[dspw] ChMaskShft -  ",chShift);
-   // LOGC("[dspw] rhdChMaskShftStr -  ",rhdChMaskShftStr.toUpperCase());
+    //LOGC("[dspw] ChMaskShft -  ",chShift);
+    //LOGC("[dspw] rhdChMaskShftStr -  ",rhdChMaskShftStr.toUpperCase());
     LOGD("[dspw] rhdChMaskShftStr -  ",rhdChMaskShftStr.toUpperCase());
 
     rcbMsgStr = "__SL_P_U00=" + rhdChMaskShftStr.toUpperCase();
-    LOGD("[dspw] rcbMsgStr with Shift  -  ",rcbMsgStr);
+    //LOGC("[dspw] rcbMsgStr with Shift  -  ",rcbMsgStr);
 	sendRCBTriggerPost(ipNumStr, rcbMsgStr);
 
 	// send SPI Bit Rate command to RCB
@@ -1116,7 +1157,7 @@ String RcbWifi::getBatteryInfo()
             "After recharge, Press Initialize button to try again.",
             "OK", 0);
     }
-	//Reset Battery Voltage
+    
 	batteryVolts = 0;
 	return batteryInfo;
 }

@@ -169,9 +169,15 @@ namespace RcbWifiNode
         bool sampleEventIsValid = true;
         bool smplEventNumIsValid = true;
 
+        bool bCastSync = 1;
         // IP stuff
         IPAddress getCurrentIpAddress();
         IPAddress myHost;
+        
+        // used by URL Post
+        StringPairArray responseHeaders;
+        void sendRCBTriggerPutEd(String command, String msgStr);
+        String getResultTextEd(const URL& url);
 
         // total number of 16-bit samples in UDP packet is numTs * (num chan + aux)
         int numTsItems[8] = { 21, 23, 27, 32, 39, 51, 71, 119 }; // numCh[32, 28, 24,20, 16, 12, 8, 4];

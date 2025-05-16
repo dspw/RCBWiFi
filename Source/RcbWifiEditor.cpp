@@ -254,7 +254,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     // AUX Enable
     auxEnableButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
     auxEnableButton->setRadius(3.0f);
-    auxEnableButton->setBounds(260, 40, 50, 18);
+    auxEnableButton->setBounds(260, 40, 52, 18);
     auxEnableButton->addListener(this);
     auxEnableButton->setClickingTogglesState(true);
     auxEnableButton->setTooltip("Enable RHD AUX Inputs");
@@ -269,13 +269,13 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
    // sampleEventButton->setBounds(260, 74, 50, 18);
     sampleEventButton->addListener(this);
     sampleEventButton->setClickingTogglesState(true);
-    sampleEventButton->setTooltip("Enable Sample Event #8 ");
+    sampleEventButton->setTooltip("Enable Sample Event # or Enable Broadcast Sync. ");
     addAndMakeVisible(sampleEventButton);
     sampleEventButton->setToggleState(false, dontSendNotification);
     
     sampleEventNumLabel = new Label("sampleEventNumLabel", "1");
-    sampleEventNumLabel->setBounds(290, 75, 18, 16);
-    sampleEventNumLabel->setTooltip("Enter Starting Channel. Default is 1.");
+    sampleEventNumLabel->setBounds(292, 75, 18, 16);
+    sampleEventNumLabel->setTooltip("Enter Event Number.   Default is 1.\nEnter 0 for Broadcast Sync on Event 1.");
     sampleEventNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     sampleEventNumLabel->setColour(Label::textColourId, Colours::black);
     sampleEventNumLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
@@ -292,16 +292,17 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 
     numSamplesEventLabel = new Label("numSamplesLabel", "Samples");
     numSamplesEventLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
-    numSamplesEventLabel->setBounds(257, 95, 85, 12);
+    numSamplesEventLabel->setBounds(256, 95, 85, 12);
     numSamplesEventLabel->setColour(Label::textColourId, Colours::black);
     addAndMakeVisible(numSamplesEventLabel);
     
     samplesNumLabel = new Label("samplesNumLabel", "1000");
-    samplesNumLabel->setBounds(260, 108, 50, 17);
+    samplesNumLabel->setBounds(260, 108, 52, 17);
     samplesNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     samplesNumLabel->setColour(Label::textColourId, Colours::black);
     samplesNumLabel->setColour(Label::backgroundColourId, Colours::white);
-    samplesNumLabel->setTooltip("Enter Number of Samples in each Sample Event ");
+    samplesNumLabel->setTooltip("Enter Number of Samples in each Event.\nor\nEnter Broadcast Sync Timer Pulse (msec).");
+    
     samplesNumLabel->setEditable(true,false,true);
     
     samplesNumLabel->addListener(this);
@@ -435,7 +436,8 @@ void RcbWifiEditor::timerCallback(int timerID)
 		timeInt--;
        
     // timer 2 is used when not streaming data.  checks that RCB is still alive on network and updates battery voltage display.
-	}else if (timerID == 2)
+	}
+    else if (timerID == 2)
     {
         //first check that RCB init happens ok
 		String htmlStatus =	node->getIntanStatusInfo();
@@ -467,12 +469,43 @@ void RcbWifiEditor::timerCallback(int timerID)
             rcbIsLost++;
 		}
 	}
+    else if (timerID == 3)
+    {
+        // timer 3 used only to send Broadcast Sync messages
+        if (sampleEventNumLabel->getText() == "0")
+        {
+            numSamplesEventLabel->setText("Time ms",sendNotification);
+            if (sampleEventButton->getToggleState() == true)
+            {
+                if (bCastSync == 1)
+                {
+                    bCastSync=0;
+                    String timerTime = samplesNumLabel->getText();
+                    //  sendRCBTriggerPutEd( "DSPW RCB TIMER 1 700"); // Timer version
+                    sendRCBTriggerPutEd("message", "DSPW RCB TRIGGER 1 1");  // Trigger version
+                   
+                }
+                else
+                {
+                    bCastSync = 1;
+                    sendRCBTriggerPutEd("message", "DSPW RCB TRIGGER 1 0"); // Trigger version
+                }
+            }
+            else
+            {   // stopTimer(3) ; // Timer version
+                sendRCBTriggerPutEd("message", "DSPW RCB TRIGGER 1 0"); // Trigger version
+            }
+        }
+       
+    }
 }
 
 void RcbWifiEditor::stopAcquisition()
 {
 	stopTimer(1); // stop UDP packet update Timer
-   
+    stopTimer(3); // stop Broadcast Sync Timer
+    sampleEventButton->setToggleState(false,sendNotification);
+   // sendRCBTriggerPutEd( "DSPW RCB TRIGGER 1 0");
     if (timer2Disable == false)
     {
         if (node->initPassed == 1)
@@ -704,36 +737,79 @@ void RcbWifiEditor::buttonClicked(Button* button)
     
 	else if (button == dspOffsetButton)
 	{
-		// get toggle state
 		node->initPassed = false;
 		initButton->setLabel("Init");
 	}
     else if (button == auxEnableButton)
     {
-        // get toggle state
         node->initPassed = false;
         initButton->setLabel("Init");
     }
     else if (button == sampleEventButton)
     {
-        // get toggle state
+        // not needed as only affects the event generator.  No changes sent to the RCB device.
         //node->initPassed = false;
         //initButton->setLabel("Init");
-        node->sampleEventEnableState = sampleEventButton->getToggleState();
+        
+      //  node->sampleEventEnableState = sampleEventButton->getToggleState();
+        
+        //use as Sw Sync Trigger on TTL Event 1
+        if (sampleEventNumLabel->getText() == "0")
+        {
+            //first check to see if HTTP Server is enabled
+            URL urlInit("http://localhost:37497/api/processors");
+            auto result = getResultTextEd(urlInit);
+            //LOGC("[dspw] result is - ",result);
+            // do something to tell user
+            if (result.length() < 200)
+            {
+                LOGC("[dspw] msg is  ",result);
+                sampleEventButton->setToggleState(false, dontSendNotification);
+                //return;
+            }
+            else
+            {
+                numSamplesEventLabel->setText("Time ms",sendNotification);
+                if (sampleEventButton->getToggleState() == true)
+                {
+                    //sendRCBTriggerPutEd("processors", ""); // Trigger version
+                    String timerTime = samplesNumLabel->getText();
+                    //  sendRCBTriggerPutEd( "DSPW RCB TIMER 1 700"); // Timer version
+                    //  sendRCBTriggerPutEd( "DSPW RCB TIMER 1 " + timerTime);
+                    sendRCBTriggerPutEd("message", "DSPW RCB TRIGGER 1 1");
+                    Value val = samplesNumLabel->getTextValue();
+                    int requestedValue = int(val.getValue());
+                    startTimer(3,requestedValue);
+                }
+                else
+                {   // stop timer
+                    // sendRCBTriggerPutEd( "DSPW RCB TIMER 1 0");
+                    sendRCBTriggerPutEd("message", "DSPW RCB TRIGGER 1 0");
+                    stopTimer(3);
+                }
+            }
+        }
+        else
+        {   //use as Sw Event Trigger on selected TTL Event
+            numSamplesEventLabel->setText("Samples",sendNotification);
+            node->sampleEventEnableState = sampleEventButton->getToggleState();
+        }
     }
 }
 
 void RcbWifiEditor::labelTextChanged(juce::Label* label)
 {
+    // these now done inside each Label Text Changed
 //	bool ipIsValid = false;
 //	bool hostIpIsValid = false;
 //	bool portIsValid = false;
 //	bool dspHpfIsValid = false;
-//    bool chStartIsValid = false;
-//    bool sampleEventIsValid = false;
+//  bool chStartIsValid = false;
+//  bool sampleEventIsValid = false;
 
 	//node->initPassed = false;
 	//initButton->setLabel("Init");
+    
 	if (label == rcbIpNumLabel)
 	{
         node->initPassed = false;
@@ -752,7 +828,7 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 				"",
 				"OK", 0);
 
-			// reset ip address to default
+			// reset ip address to RCB default
 			String ipStr = "192.168.0.93";
 			rcbIpNumLabel->setText(ipStr, sendNotification);
 		}
@@ -802,7 +878,6 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
 		else
 		{
 			portIsValid = true;
-
 		}
 	}
 	else if (label == dspCutNumLabel)
@@ -852,7 +927,7 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
         else
         {
             chStartIsValid = true;
-            //uiIsOk = true;
+            uiIsOk = true;
         }
     }
     else if (label == sampleEventNumLabel)
@@ -866,9 +941,9 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
         LOGD("[dspw] sampleEventNum requested value = ",String(int(requestedValue)));
         
         int smplEventNum = chanCbox->getText().getIntValue();
-        if (requestedValue < 1 || requestedValue -1 > 8)
+        if (requestedValue < 0 || requestedValue -1 > 8)
         {
-            //smplEventNumIsValid = false;
+            smplEventNumIsValid = false;
             uiIsOk =false;
             label->setText("1", sendNotification);
             smplEventNumIsValid = true;
@@ -883,6 +958,10 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
         else
         {
             smplEventNumIsValid = true;
+            if (requestedValue == 0)
+            numSamplesEventLabel->setText("Time ms",sendNotification);
+            else
+                numSamplesEventLabel->setText("Samples",sendNotification);
             
             // each eventstate bit corresponds to an event 0x1 = event 1, 0xf = event 1,2,3,4
             int eventAdjust[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
@@ -892,8 +971,6 @@ void RcbWifiEditor::labelTextChanged(juce::Label* label)
     }
     else if (label == samplesNumLabel)
     {
-        //node->initPassed = false;
-        //initButton->setLabel("Init");
         Value val = label->getTextValue();
         int requestedValue = int(val.getValue());
         LOGD("[dspw] sampleEventNum requested value = ",String(int(requestedValue)));
@@ -929,7 +1006,6 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
 
 	if (comboBoxThatHasChanged == chanCbox)
 	{
-      //  fsCbox->clear();
         // get number of channels from comboBox
         int num_channels = chanCbox->getText().getIntValue();
         Value chStartVal = chStartNumLabel->getTextValue();
@@ -937,7 +1013,7 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
         
         if ( requestedValue + num_channels - 1 > 32)
         {
-        //chStartIsValid = false;
+        chStartIsValid = false;
         uiIsOk = false;
         
         AlertWindow::showMessageBox(AlertWindow::NoIcon,
@@ -966,11 +1042,10 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
                     "OK", 0);
             }
         }
-            //chStartIsValid = true;
+        
+        chStartIsValid = true;
         uiIsOk = true;
         
-        // get number of channels from comboBox
-        // int num_channels = chanCbox->getText().getIntValue();
         node->num_channels = num_channels;
         
         // get number of samples in each packet
@@ -996,8 +1071,6 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
                     "Please check your Channel Number setting. \r\n"
                     "",
                     "OK", 0);
-                
-                //fsCbox->setSelectedItemIndex(2);
             }
         }
 		// get desired sample rate from combo box
@@ -1035,6 +1108,89 @@ void RcbWifiEditor::comboBoxChanged(ComboBox* comboBoxThatHasChanged)
 	}
 }
 
+// added to send Put message to Broadcast Handler via OE HTTP Server at localhost (127.0.0.1)
+void RcbWifiEditor::sendRCBTriggerPutEd(String command, String msgStr)
+{
+    //initPassed = false;
+   String ipNumStr = "127.0.0.1";
+    
+    DynamicObject* obj = new DynamicObject();
+    obj->setProperty("text",msgStr);
+    var json (obj);
+    String s = JSON::toString(json);
+ //   URL urlPut = URL("http://:127.0.0.137497/api/message").withPOSTData(s);
+    URL urlPut = URL("http://localhost:37497/api/" + command).withPOSTData(s);
+
+    int statusCode = 0;
+    
+    //LOGD("POST ipNumStr - ", ipNumStr);
+    //LOGD("POST msgStr - ", msgStr);
+    //LOGC("[dspw] PUT str URL - ", urlPut.toString(true));
+    //LOGC("[dspw] PUT str data - ", urlPut.getPostData());
+    
+    std::unique_ptr<InputStream> putStream(urlPut.createInputStream(true, nullptr, nullptr, {"Content-Type: application/json"}, 1000, &responseHeaders, &statusCode, 5, "PUT"));
+        
+    if (putStream != nullptr)
+    {
+        //initPassed = true;
+        String putStr = putStream->readEntireStreamAsString();
+        //LOGC("[dspw] PUT Stream StatusCode = ",statusCode);
+        if (statusCode != 200)
+        {
+            LOGC("[dspw] PUT Stream = ",putStr);
+            LOGC("[dspw] PUT Stream Status Code = ",statusCode);
+        }
+    }
+    else
+    {
+        //initPassed = false;
+        stopTimer(3);
+        CoreServices::setAcquisitionStatus(false);
+        sampleEventButton->setToggleState(false,sendNotification);
+        stopTimer(3);
+        
+        AlertWindow::showMessageBox(AlertWindow::NoIcon,
+            "OE HTTP Server not found at IP address " + ipNumStr,
+            "Please check that HTTP Server is Enabled. \r\n\r\n"
+            "Press Initialize button to try again.",
+            "OK", 0);
+    }
+}
+
+// taken from Juce network demo
+String RcbWifiEditor::getResultTextEd(const URL& url)
+{
+    StringPairArray responseHeaders;
+    int statusCode = 0;
+
+    std::unique_ptr<InputStream> urlStream = url.createInputStream(false, nullptr, nullptr, String(), 3000, &responseHeaders, &statusCode);
+
+    if (urlStream != nullptr)
+    {
+        return (statusCode != 0 ? "Status code: " + String(statusCode) + "\n" : String())
+            + "Response headers: " + "\n"
+            + responseHeaders.getDescription() + "\n"
+            + "----------------------------------------------------" + "\n"
+            + urlStream->readEntireStreamAsString();
+    }
+
+    if (statusCode != 0)
+    {
+        AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                                    "OE HTTP Server not found. ",
+                                    "Please check that Open Ephys HTTP Server is Enabled. \r\n\r\n"
+                                    "Restart Acquire.",
+                                    "OK", 0);
+        return "Failed to connect, status code = " + String(statusCode);
+    }
+    AlertWindow::showMessageBox(AlertWindow::NoIcon,
+                                "OE HTTP Server not found. ",
+                                "Please check that Open Ephys HTTP Server is Enabled. \r\n\r\n"
+                                "Then Restart Acquire.",
+                                "OK", 0);
+    return "Failed to connect! Status code = " + String(statusCode);
+}
+
 void RcbWifiEditor::saveCustomParametersToXml(XmlElement* xmlNode)
 {
 	XmlElement* parameters = xmlNode->createNewChildElement("PARAMETERS");
@@ -1052,8 +1208,9 @@ void RcbWifiEditor::saveCustomParametersToXml(XmlElement* xmlNode)
 	parameters->setAttribute("paPwr", paPwrCbox->getSelectedItemIndex());
     parameters->setAttribute("pollRate", pollRateCbox->getSelectedItemIndex());
     parameters->setAttribute("auxEnBut", auxEnableButton->getToggleState());
-    parameters->setAttribute("sampleEnBut", sampleEventButton->getToggleState());
+//    parameters->setAttribute("sampleEnBut", sampleEventButton->getToggleState());
     parameters->setAttribute("samplesNum", samplesNumLabel->getText());
+    parameters->setAttribute("samplesEventNum", sampleEventNumLabel->getText());
 }
 
 void RcbWifiEditor::loadCustomParametersFromXml(XmlElement* xmlNode)
@@ -1075,8 +1232,9 @@ void RcbWifiEditor::loadCustomParametersFromXml(XmlElement* xmlNode)
 			paPwrCbox->setSelectedItemIndex(subNode->getIntAttribute("paPwr", 5), dontSendNotification);
             pollRateCbox->setSelectedItemIndex(subNode->getIntAttribute("pollRate", 0), dontSendNotification);
             auxEnableButton->setToggleState(subNode->getBoolAttribute("auxEnBut", false), dontSendNotification);
-            sampleEventButton->setToggleState(subNode->getBoolAttribute("sampleEnBut", false), dontSendNotification);
-            samplesNumLabel->setText(subNode->getStringAttribute("samplesNum", ""),dontSendNotification);
+   //         sampleEventButton->setToggleState(subNode->getBoolAttribute("sampleEnBut", false), dontSendNotification);
+            samplesNumLabel->setText(subNode->getStringAttribute("samplesNum", ""), dontSendNotification);
+            sampleEventNumLabel->setText(subNode->getStringAttribute("samplesEventNum", ""), sendNotification);
 		}
 	}
     // this is needed due to possible old hostAddr saved in Paremeters

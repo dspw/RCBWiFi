@@ -50,7 +50,7 @@ const float BATT_STREAM_THRESH = 3.7;
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.7";
+const String PLUGIN_VERSION = "v0.1.8";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2
@@ -194,6 +194,7 @@ namespace RcbWifiNode
         String chipId = "";
         
         void sendRCBTriggerPost(String ipNumStr, String msgStr);
+        void sendRCBTriggerPut(String msgStr);
         String getResultText(const URL& url);
 
         Array<int64> sampleNumbers;
