@@ -94,13 +94,16 @@ namespace RcbWifiNode
         void tryToConnect();
 
         // ** Allows the DataThread plugin to respond to messages sent by other processors */
-        void handleBroadcastMessage(String msg) override;
-        
+      //  void handleBroadcastMessage(String msg) override;
+      //  void handleBroadcastMessage(String msg) ;
+        void handleBroadcastMessage (const String& msg, const int64 messageTimeMilliseconds) override;
+
         /** Allow the thread to respond to messages sent by other plugins */
       //   void handleBroadcastMessage (const String& msg);
 
         // ** Allows the DataThread plugin to handle a config message while acquisition is not active. */
-        String handleConfigMessage(String msg) override;
+       // String handleConfigMessage(String msg) override;
+        String handleConfigMessage(String msg) ;
         
         /** Network stream parameters (must match features of incoming data) */
         int port = 0;

@@ -98,7 +98,8 @@ namespace RcbWifiNode
         // RHD DSP Cutoff
         ScopedPointer<Label> dspCutLabel;
         ScopedPointer<Label> dspCutNumLabel;
-        ScopedPointer<UtilityButton> dspOffsetButton;
+        //ScopedPointer<UtilityButton> dspOffsetButton;
+        std::unique_ptr<UtilityButton> dspOffsetButton;
 
         // UDP Packet Info - Hit Miss
         ScopedPointer<Label> seqNumLabel;
@@ -130,20 +131,25 @@ namespace RcbWifiNode
 
         // Init Button
         ScopedPointer<Label> initLabel;
-        ScopedPointer<UtilityButton> initButton;
+      //  ScopedPointer<UtilityButton> initButton;
+        std::unique_ptr<UtilityButton> initButton;
         
         // Timer Poll rep rate
         ScopedPointer<Label> pollRateLabel;
         ScopedPointer<ComboBox> pollRateCbox;
         
         // RHD Aux Inputs enable
-        ScopedPointer<UtilityButton> auxEnableButton;
+        //ScopedPointer<UtilityButton> auxEnableButton;
+        std::unique_ptr<UtilityButton> auxEnableButton;
+
         ScopedPointer<Label> auxEnableLabel;
         
         // Sample Event enable
         ScopedPointer<Label> sampleEventLabel;
         ScopedPointer<Label> samplesNumLabel;
-        ScopedPointer<UtilityButton> sampleEventButton;
+       // ScopedPointer<UtilityButton> sampleEventButton;
+        std::unique_ptr<UtilityButton> sampleEventButton;
+
         ScopedPointer<Label> numSamplesEventLabel;
         
         ScopedPointer<Label>sampleEventNumLabel;

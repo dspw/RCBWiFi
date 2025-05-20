@@ -118,7 +118,9 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     addAndMakeVisible(initLabel);
 
     // Init button
-    initButton = new UtilityButton("Init Me!", Font("Small Text", 13, Font::bold));
+   // initButton = new UtilityButton("Init Me!", Font("Small Text", 13, Font::bold));
+    initButton = std::make_unique<UtilityButton> ("Init Me!");
+    initButton->setFont( FontOptions("Small Text", 13, Font::bold));
     initButton->setTooltip("Press to Initialize RCB device with UI values.");
 
     initButton->setBounds(57, 108, 55, 18);
@@ -142,13 +144,16 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     addAndMakeVisible(dspCutNumLabel);
 
     // add DSP Offset Button
-    dspOffsetButton = new UtilityButton("DSP:", Font("Small Text", 13, Font::plain));
+ //   dspOffsetButton = new UtilityButton("DSP:", Font("Small Text", 13, Font::plain));
+    dspOffsetButton = std::make_unique<UtilityButton> ("DSP:");
+    dspOffsetButton-> setFont( FontOptions("Small Text", 13, Font::plain));
     dspOffsetButton->setRadius(3.0f);
     dspOffsetButton->setBounds(122, 40, 29, 17);
     dspOffsetButton->addListener(this);
     dspOffsetButton->setClickingTogglesState(true);
     dspOffsetButton->setTooltip("Toggle DSP offset removal");
-    addAndMakeVisible(dspOffsetButton);
+   // addAndMakeVisible(dspOffsetButton);
+    addAndMakeVisible(dspOffsetButton.get());
     dspOffsetButton->setToggleState(true, dontSendNotification);
 
     // RHD Upper BW
@@ -209,7 +214,8 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 	addAndMakeVisible(chanLabel);
 
 	chanCbox = new ComboBox();
-    chanCbox->setBounds(190, 74, 36, 17);
+    
+    chanCbox->setBounds(190, 74, 42, 17);
     chanCbox->setTooltip("Choose number of RHD2000 channels to stream over WiFi.");
 
 	chanCbox->addListener(this);
@@ -219,7 +225,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 	addAndMakeVisible(chanCbox);
     
     chStartNumLabel = new Label("chStartNumLabel", "1");
-    chStartNumLabel->setBounds(228, 74, 21, 17);
+    chStartNumLabel->setBounds(234, 74, 21, 17);
     chStartNumLabel->setTooltip("Enter Starting Channel. Default is 1.");
     chStartNumLabel->setFont(Font(Font::getDefaultSerifFontName(), 13, Font::plain));
     chStartNumLabel->setColour(Label::textColourId, Colours::black);
@@ -252,17 +258,22 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     addAndMakeVisible(auxEnableLabel);
     
     // AUX Enable
-    auxEnableButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
+ //   auxEnableButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
+    auxEnableButton = std::make_unique<UtilityButton> ("Enable");
+    auxEnableButton-> setFont( FontOptions("Small Text", 13, Font::plain));
     auxEnableButton->setRadius(3.0f);
     auxEnableButton->setBounds(260, 40, 52, 18);
     auxEnableButton->addListener(this);
     auxEnableButton->setClickingTogglesState(true);
     auxEnableButton->setTooltip("Enable RHD AUX Inputs");
-    addAndMakeVisible(auxEnableButton);
+   // addAndMakeVisible(auxEnableButton);
+    addAndMakeVisible(auxEnableButton.get());
     auxEnableButton->setToggleState(false, dontSendNotification);
     
     // Sample Event Enable
-    sampleEventButton = new UtilityButton("Set", Font("Small Text", 13, Font::plain));
+ //   sampleEventButton = new UtilityButton("Set", Font("Small Text", 13, Font::plain));
+    sampleEventButton = std::make_unique<UtilityButton> ("Set");
+    sampleEventButton->setFont( FontOptions("Small Text", 13, Font::plain));
     //sampleEventButton = new UtilityButton("Enable", Font("Small Text", 13, Font::plain));
     sampleEventButton->setRadius(3.0f);
     sampleEventButton->setBounds(260, 74, 27, 18);
@@ -270,7 +281,8 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     sampleEventButton->addListener(this);
     sampleEventButton->setClickingTogglesState(true);
     sampleEventButton->setTooltip("Enable Sample Event # or Enable Broadcast Sync. ");
-    addAndMakeVisible(sampleEventButton);
+  //  addAndMakeVisible(sampleEventButton);
+    addAndMakeVisible(sampleEventButton.get());
     sampleEventButton->setToggleState(false, dontSendNotification);
     
     sampleEventNumLabel = new Label("sampleEventNumLabel", "1");
@@ -312,7 +324,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     
     // Battery Poll timer rate
     pollRateCbox = new ComboBox();
-    pollRateCbox->setBounds(418, 109, 44, 17);
+    pollRateCbox->setBounds(418, 109, 48, 17);
 
     pollRateCbox->addListener(this);
     for (int i = 0; i < 10; i++)
@@ -735,17 +747,17 @@ void RcbWifiEditor::buttonClicked(Button* button)
         }
     }
     
-	else if (button == dspOffsetButton)
+	else if (button == dspOffsetButton.get())
 	{
 		node->initPassed = false;
 		initButton->setLabel("Init");
 	}
-    else if (button == auxEnableButton)
+    else if (button == auxEnableButton.get())
     {
         node->initPassed = false;
         initButton->setLabel("Init");
     }
-    else if (button == sampleEventButton)
+    else if (button == sampleEventButton.get())
     {
         // not needed as only affects the event generator.  No changes sent to the RCB device.
         //node->initPassed = false;
