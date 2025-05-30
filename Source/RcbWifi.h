@@ -137,6 +137,7 @@ namespace RcbWifiNode
         bool isGoodIntan = false;
         bool isGoodRCB = false;
         bool initPassed = false;
+        bool isChannelOk = false;
 
         String getIntanStatusInfo();
         String batteryStatusInfo;

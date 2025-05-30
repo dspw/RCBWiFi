@@ -582,41 +582,26 @@ bool RcbWifi::updateBuffer()
             }
         }
         
-        // ********** if aux is enabled.  not working yet!!!!  ****************
-        //     num_channels = num_channels + 3;
+        // ********** if aux is enabled.  ****************
         if (auxEnableState == true)  // add aux channels to stream
         {
-            //for (int auxCh = 0; auxCh < 3; auxCh++)  // num_channels + 3 for aux
-            // {
             int auxInc = 0;//auxStart;
             for (int i = 0; i < num_samp; i++)
             {
-                //for (int auxCnt = 0; auxCnt < 4; auxCnt++)
-                
                 //collect aux into buffer
                 int auxIndex = auxStart % 4;
-                //   LOGC("auxIndex = ", auxIndex, "  num_samp = ", i);
                 // in RCB packet aux samples are located before electrode samples.
                 
-                //  auxbuf[auxIndex] = recvbuf[(20) + (i * (num_channels + 2))] - 32768;
-                //    auxbuf[auxIndex + (i*4)] = recvbuf[(20) + (i * (num_channels + 2))];// - 32768;
-                //    auxbuf[auxIndex + i] = recvbuf[(20) + (i * (num_channels + 2))];// - 32768;
-                
-                auxbuf[auxIndex + auxInc] = (recvbuf[(20) + (i * (num_channels + 2))]);// - 32768); //very close
-                
-                //  LOGC("recvbuf20 = ", recvbuf[(20) + (i * (num_channels + 2))] - 32768);
-                //   LOGC("auxIndex +  = ", auxIndex, " auxInc = ", (auxInc), "  num_samp = ", i);
+                auxbuf[auxIndex + auxInc] = (recvbuf[(20) + (i * (num_channels + 2))]);// - 32768);
                 auxStart = auxStart + 1;
                 if ((i+1) % 4 == 0)
                     auxInc=auxInc+4;
             }
-         
+            int numIterFl = floor(num_samp/4);
             for (int chan = 0; chan < 3; chan++)
-            { //int chan=1;
-                for (int i = 0; i < num_samp/4; i++)
-                    
-        //     for (int i = 0; i < (auxDiv-auxRem  ); i++)
-            // for (int i = 0; i < (6 ); i++)
+            {
+                // for (int i = 0; i < num_samp/4; i++)
+                for (int i = 0; i < (numIterFl ); i++)
                 {
                     //   LOGC(" chan = " , chan + 1 + (i*4));
                     //LOGC("chan+1+(i*4) = " , auxbuf[chan+1+(i*4)]- 32768);
@@ -624,25 +609,10 @@ bool RcbWifi::updateBuffer()
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
-                    
+                    convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                 }
-                // if (auxRem != 0)
-                /*for (int j = (auxDiv - auxRem)  ; j < auxDiv +1; j++)
-                 //   for (int j = 5; j < 9; j++)
-                 {
-                 LOGC(" chan = " , chan + 1 + (j*4));
-                 convbuf[k++] = 0.0000374 * (float)(auxbuf[chan + 1 + (j*4)]);// - 32768);
-                 convbuf[k++] = 0.0000374 * (float)(auxbuf[chan + 1 + (j*4)]);// - 32768);
-                 convbuf[k++] = 0.0000374 * (float)(auxbuf[chan + 1 + (j*4)]);// - 32768);
-                 convbuf[k++] = 0.0000374 * (float)(auxbuf[chan + 1 + (j*4)]);// - 32768);
-                 convbuf[k++] = 0.0000374 * (float)(auxbuf[chan + 1 + (j*4)]);// - 32768);
-                 } */
-            
-                convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (9*4)] - 32768);
-                convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (9*4)] - 32768);
-                convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (9*4)] - 32768);
+                k = k - (numIterFl*5 - num_samp);
             }
-            // }
         }
         
         // DSPW version for RCB WiFi plugin
@@ -1010,6 +980,7 @@ String RcbWifi::getIntanStatusInfo()
 {
     isGoodIntan = false;
     isGoodRCB = false;
+    isChannelOk = true;
     
     String myTime = Time::getCurrentTime().toString(false,true);
     LOGD("[dspw] Time = ",myTime);
@@ -1089,13 +1060,13 @@ String RcbWifi::getIntanStatusInfo()
                     // is RHD2216
                     chipId = "RHD2216";
                     int maxNumCh = 16;
-                    // need to expand on this to limit and set up the channels cbox
-                    if (maxNumCh > num_channels)
+                    if (num_channels > maxNumCh)
                     {
                         isGoodIntan = false;
+                        isChannelOk = false;
                         AlertWindow::showMessageBox(AlertWindow::NoIcon,
                                                     "Number of channels mismatch.",
-                                                    "Please check that Channel setting is not greater than Headstage Max channels. \r\n\r\n"
+                                                    "Please check that Channel setting is not greater than Headstage Max channels.  RHD2216 has 16 channels, RHD2132 has 32 channels. \r\n\r\n"
                                                     "Press Initialize button to try again.",
                                                     "OK", 0);
                     }
