@@ -549,9 +549,9 @@ bool RcbWifi::updateBuffer()
             miss = 0;
             delayed = 0;
             
-            LOGD("[dspw] mNum = ",(String::toHexString(magicNum)));
-            LOGD("[dspw] sod = ",(String::toHexString(sod)));
-            LOGD("[dspw] port-",String(port),"  seqNum = ",(String::toHexString(seqNum)));
+            //LOGD("[dspw] mNum = ",(String::toHexString(magicNum)));
+            //LOGD("[dspw] sod = ",(String::toHexString(sod)));
+            //LOGD("[dspw] port-",String(port),"  seqNum = ",(String::toHexString(seqNum)));
         }
         
         if (nextsn == 0 || seqNum == nextsn) {
