@@ -51,10 +51,10 @@ sample_rate(DEFAULT_SAMPLE_RATE)
     recvBufSize = 40 + (((num_channels + 2) * num_samp) * 2);
     recvbuf = (uint16_t*)malloc(recvBufSize);
     
-    convBufSize = 0 + (((num_channels)*num_samp) * 4);
+    convBufSize = 64 + (((num_channels)*num_samp) * 4);
     //convBufSize = 0 + (((num_channels + 3)*num_samp) * 4); // with aux, done later
     convbuf = (float*)malloc(convBufSize);
-    auxbuf = (uint16_t*)malloc(8*num_samp);
+    auxbuf = (uint16_t*)malloc(8*num_samp * 2);
 }
 
 std::unique_ptr<GenericEditor> RcbWifi::createEditor(SourceNode* sn)
@@ -255,8 +255,9 @@ void RcbWifi::resizeBuffers()
     if (auxEnableState == true)
     {
         sourceBuffers[0]->resize(num_channels + 3, 10000);  // with aux
-        convBufSize = 0 + (((num_channels + 3)*num_samp) * 4);  // with aux
-        
+       // convBufSize = 0 + (((num_channels + 3)*num_samp) * 4);  // with aux
+        convBufSize = 64 + (((num_channels + 3) * num_samp) * 4);  // with aux
+
     } else
     {
         sourceBuffers[0]->resize(num_channels, 10000);  // no aux
@@ -266,7 +267,7 @@ void RcbWifi::resizeBuffers()
     recvBufSize = 40 + (((num_channels + 2) * num_samp) * 2);
     recvbuf = (uint16_t*)realloc(recvbuf, recvBufSize);
     convbuf = (float*)realloc(convbuf, convBufSize);
-    auxbuf = (uint16_t*)realloc(auxbuf,  num_samp * 8);
+    auxbuf = (uint16_t*)realloc(auxbuf,  num_samp * 8 * 2); // * 2 dspw
     
     LOGD("[dspw] num_channels = ",String(num_channels));
     LOGD( "[dspw] num_samp = ",String(num_samp));
@@ -571,7 +572,7 @@ bool RcbWifi::updateBuffer()
             hit++;
         }
         
-        int k = 0;
+        int k = 0; 
         for (int i = 0; i < num_channels; i++)  // num_channels + 3 for aux
         {
             for (int j = 0; j < num_samp; j++)
@@ -597,21 +598,20 @@ bool RcbWifi::updateBuffer()
                 if ((i+1) % 4 == 0)
                     auxInc=auxInc+4;
             }
-            int numIterFl = floor(num_samp/4);
+            int auxIterFl = floor(num_samp/4);
             for (int chan = 0; chan < 3; chan++)
             {
                 // for (int i = 0; i < num_samp/4; i++)
-                for (int i = 0; i < (numIterFl ); i++)
+                for (int i = 0; i < (auxIterFl ); i++)
                 {
-                    //   LOGC(" chan = " , chan + 1 + (i*4));
-                    //LOGC("chan+1+(i*4) = " , auxbuf[chan+1+(i*4)]- 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                     convbuf[k++] = 0.0000374 * float(auxbuf[chan + 1 + (i*4)] - 32768);
                 }
-                k = k - (numIterFl*5 - num_samp);
+                k = k - (auxIterFl*5 - num_samp);
+
             }
         }
         
