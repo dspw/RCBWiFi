@@ -50,7 +50,9 @@ const float BATT_STREAM_THRESH = 3.7;
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.8";
+//v0.2.0 and above require OE GUI v1.0 or above.
+// Not compatible with OE GUI v0.6.7
+const String PLUGIN_VERSION = "v0.2.0";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2

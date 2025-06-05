@@ -95,8 +95,7 @@ RcbWifi::~RcbWifi()
 //{
 
 //}
-//handleBroadcastMessage (const String& msg, const int64 messageTimeMilliseconds)
-//void RcbWifi::handleBroadcastMessage(String msg)
+
 void RcbWifi::handleBroadcastMessage (const String& msg, const int64 messageTimeMilliseconds)
 {
     //LOGC("[dspw] bcast msg = ",msg);
@@ -694,7 +693,7 @@ void RcbWifi::sendRCBTriggerPost(String ipNumStr, String msgStr)
 }
 
 // added to send Put message to Broadcast Handler via OE HTTP Server at 127.0.0.1
-// has been moved to editor, still here for reference only
+// has been moved to editor, still here for reference only until finish testing
 void RcbWifi::sendRCBTriggerPut(String msgStr)
 {
     //initPassed = false;
@@ -757,10 +756,6 @@ void RcbWifi::setRCBTokens()
     
     // get number of channels from global
     // set rhd channel mask
-    //String rhdChMaskStr = (chMask[num_channels - 1]) + " 6"; //the "6" is needed in all masks for correct aux sequence
-    //LOGC("[dspw] rhdChMaskStr -  ",rhdChMaskStr);
-    
-    // new approach
     String rhdChMaskShftStr = String::toHexString(chShftMask[num_channels - 1] << (chShift - 1)) + " 6" ; //the "6" is needed in all masks for correct aux sequence
     
     //LOGC("[dspw] ChMaskShft -  ",chShift);
@@ -1199,6 +1194,8 @@ String RcbWifi::getResultText(const URL& url)
     return "Failed to connect!";
 }
 
+// code from OE GUI 0.6.7 plugin version
+// modified above for OE GUI v1.0
 // using the transpose version from EphysSocket
 /*    int k = 0;
  for (int i = 0; i < num_samp; i++)
