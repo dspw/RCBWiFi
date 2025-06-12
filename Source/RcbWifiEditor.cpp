@@ -147,7 +147,7 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
 
     // add DSP Offset Button
  //   dspOffsetButton = new UtilityButton("DSP:", Font("Small Text", 13, Font::plain));
-    dspOffsetButton = std::make_unique<UtilityButton> ("DSP:");
+    dspOffsetButton = std::make_unique<UtilityButton> ("DSP");
     dspOffsetButton-> setFont( FontOptions("Small Text", 13, Font::plain));
     dspOffsetButton->setRadius(3.0f);
     dspOffsetButton->setBounds(122, 40, 29, 17);
@@ -161,12 +161,12 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     // RHD Upper BW
     upBwLabel = new Label("upBW", "Upper");
     upBwLabel->setFont(FontOptions(Font::getDefaultSerifFontName(), 13, Font::plain));
-    upBwLabel->setBounds(120, 62, 85, 10);
+    upBwLabel->setBounds(120, 61, 85, 12);
     upBwLabel->setColour(Label::textColourId, Colours::black);
     addAndMakeVisible(upBwLabel);
 
     upBwCbox = new ComboBox();
-    upBwCbox->setBounds(122, 74, 59, 17);
+    upBwCbox->setBounds(121, 74, 59, 17);
     upBwCbox->setTooltip("Choose RHD2000 Filter Upper Freq.");
 
     upBwCbox->addListener(this);
@@ -178,12 +178,12 @@ RcbWifiEditor::RcbWifiEditor(GenericProcessor* parentNode, RcbWifi* socket) : Ge
     // RHD Lower BW
     lowBwLabel = new Label("lowBW", "Lower");
     lowBwLabel->setFont(FontOptions(Font::getDefaultSerifFontName(), 13, Font::plain));
-    lowBwLabel->setBounds(120, 97, 85, 12);
+    lowBwLabel->setBounds(120, 96, 85, 12);
     lowBwLabel->setColour(Label::textColourId, Colours::black);
     addAndMakeVisible(lowBwLabel);
 
     lowBwCbox = new ComboBox();
-    lowBwCbox->setBounds(122, 109, 59, 17);
+    lowBwCbox->setBounds(122, 108, 59, 17);
     lowBwCbox->setTooltip("Choose RHD2000 Filter Lower Freq.");
     lowBwCbox->addListener(this);
     for (int i = 0; i < 25; i++)
