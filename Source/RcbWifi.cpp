@@ -926,36 +926,39 @@ void RcbWifi::getMuxAdcBias(float sampleRate)  //use actual sample rate
 {
     int muxBias = 4;
     int adcBufferBias = 2;
+/*
+    float totalBias = sampleRate * (num_channels +3);
+    LOGC("[dspw] totalBias =  ",totalBias);
     
-    if (sampleRate < 3334.0) {
+    if (totalBias <= 120000.0) {
         muxBias = 40;
         adcBufferBias = 32;
     }
-    else if (sampleRate < 4001.0) {
+    else if (totalBias <= 140000.0) {
         muxBias = 40;
         adcBufferBias = 16;
     }
-    else if (sampleRate < 5001.0) {
+    else if (totalBias <= 175000.0) {
         muxBias = 40;
         adcBufferBias = 8;
     }
-    else if (sampleRate < 6251.0) {
+    else if (totalBias <= 220000.0) {
         muxBias = 32;
         adcBufferBias = 8;
     }
-    else if (sampleRate < 8001.0) {
+    else if (totalBias <= 280000.0) {
         muxBias = 26;
         adcBufferBias = 8;
     }
-    else if (sampleRate < 10001.0) {
+    else if (totalBias <= 350000.0) {
         muxBias = 18;
         adcBufferBias = 4;
     }
-    else if (sampleRate < 12501.0) {
+    else if (totalBias <= 440000.0) {
         muxBias = 16;
         adcBufferBias = 3;
     }
-    else if (sampleRate < 15001.0) {
+    else if (totalBias <= 525000.0) {
         muxBias = 7;
         adcBufferBias = 3;
     }
@@ -963,12 +966,20 @@ void RcbWifi::getMuxAdcBias(float sampleRate)  //use actual sample rate
         muxBias = 4;
         adcBufferBias = 2;
     }
+*/
+    
+    // in testing these default values for muxBias and adcBufferBias work best for all conditions
+    // leass distortion at lower samples rates than the calculated ones from RHD datasheet.
+    // under investigation why ?
+    muxBias = 4;
+    adcBufferBias = 2;
     
     rhdReg02 = muxBias;
     rhdReg01 = 64 + adcBufferBias; // 64(0x40) is added to turn on VDD sense enable bit
     
     LOGD("[dspw] muxBias =  ",muxBias);
     LOGD("[dspw] adcBufferBias =  ",adcBufferBias);
+    
 }
 
 String RcbWifi::getIntanStatusInfo()
@@ -1009,7 +1020,7 @@ String RcbWifi::getIntanStatusInfo()
             {
                 batteryStatusInfo = ("Bat " + String(batteryInit, 2) + "V OK");
             }
-            else if (batteryInit > (BATT_INIT_THRESH - 0.25))
+            else if (batteryInit > (BATT_INIT_THRESH - 0.23))
             {
                 batteryStatusInfo = ("Bat " + String(batteryInit, 2) + "V Low");
             }
@@ -1019,7 +1030,7 @@ String RcbWifi::getIntanStatusInfo()
                 isGoodRCB = false;
                 LOGC("[dspw] RCB Init Fail Battery Voltage =  ", batteryInit, "V");
                 AlertWindow::showMessageBox(AlertWindow::NoIcon,
-                                            "RCB " + ipNumStr + " Battery voltage is too low.",
+                                            "RCB " + ipNumStr + " Init Battery voltage is too low.",
                                             "Please recharge or change battery. \r\n\r\n"
                                             "Press Initialize button to try again.",
                                             "OK", 0);
@@ -1144,7 +1155,7 @@ String RcbWifi::getBatteryInfo()
     {
         batteryInfo = ("Bat " + String(battV, 2) + "V OK");
     }
-    else if (battV > (BATT_STREAM_THRESH - 0.28))
+    else if (battV > (BATT_STREAM_THRESH - 0.23))
     {
         batteryInfo = ("Bat " + String(battV, 2) + "V Low");
     }
