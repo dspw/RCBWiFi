@@ -42,15 +42,15 @@ const int DEFAULT_NUM_SAMPLES = 21; // this is num samples in udp rxbuffer.
 const int DEFAULT_NUM_CHANNELS = 32;
 
 // Battery thresholds needed to initialize RCB and start data streams
-const float BATT_INIT_THRESH = 3.7;
-const float BATT_STREAM_THRESH = 3.7;
+const float BATT_INIT_THRESH = 3.65;
+const float BATT_STREAM_THRESH = 3.65;
 
 // Factory Test mode.  Allows RCB streaming without Intan RHD.
 // Or is this the prefered behavior. Always allow streaming regardless of Intan connected.
 const bool FACTORY_TEST_MODE = 1;
 
 // Plugin Version
-const String PLUGIN_VERSION = "v0.1.8";
+const String PLUGIN_VERSION = "v0.1.9";
 
 //#define CHIP_ID_RHD2132  1
 //#define CHIP_ID_RHD2216  2
